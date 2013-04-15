@@ -11,95 +11,107 @@ class VM(object):
     flags = 0
     mem = array('H', (0 for i in range(2**16) ) )
     register = array('H', (0 for i in range(16) ) )
+
     def __init__(self):
         for reg in range(0xf):
             self.register[reg] = 0
+
     def step(self):
         """Execute instruction at self.program_counter and increment"""
         self.program_counter += 1
+
     def execute(self, op_code):
         """Carry out instruction sepcified by op_code"""
         if op_code >> 28 == 0x1:
-            #"""Jumps"""
-            if op_code >> 16 == 0x1000:
-                #"""JMP HHLL"""
-                hh_addr = op_code - (op_code >> 8 << 8)
-                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-                self.program_counter = (hh_addr << 8) + ll_addr
-            elif op_code >> 24 == 0x13:
-                #"""JME RX, RY, HHLL"""
-                y_reg = (op_code >> 20) - 0x130
-                x_reg = ((op_code >> 16) - (y_reg << 4) - 0x1300)
-                hh_addr = op_code - (op_code >> 8 << 8)
-                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-                if self.register[x_reg] == self.register[y_reg]:
-                    self.program_counter = (hh_addr << 8) + ll_addr
+            self.jump(op_code)
 
         elif op_code >> 28 == 0x2:
-            #"""Loads"""
-            if op_code >> 20 == 0x200:
-                #"""LDI RX, HHLL"""
-                x_reg = (op_code >> 16) - 0x2000
-                hh_addr = op_code - (op_code >> 8 << 8)
-                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-                addr = (hh_addr << 8) + ll_addr
-                self.register[x_reg] = self.mem[addr]
-            elif op_code >> 16 == 0x2100:
-                #"""LDI SP, HHLL"""
-                hh_addr = op_code - (op_code >> 8 << 8)
-                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-                addr = (hh_addr << 8) + ll_addr
-                self.stack_pointer = self.mem[addr]
-            elif op_code >> 20 == 0x220:
-                #"""LDM RX, HHLL"""
-                x_reg = (op_code >> 16) - 0x2200
-                hh_addr = op_code - (op_code >> 8 << 8)
-                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-                addr = (hh_addr << 8) + ll_addr
-                self.register[x_reg] = self.mem[self.mem[addr]]
-            elif op_code >> 24 == 0x23:
-                #"""LDM RX, RY"""
-                if op_code - ((op_code >> 16) << 16):
-                    raise ValueError("Invalid op code")
-                y_reg = (op_code >> 20) - 0x230
-                x_reg = (op_code >> 16) - 0x2300 - (y_reg << 4)
-
-                addr = self.register[y_reg]
-                self.register[x_reg] = self.mem[addr]
-            elif op_code >> 24 == 0x24:
-                #"""MOV RX, RY"""
-                if op_code - ((op_code >> 16) << 16):
-                    raise ValueError("Invalid op code")
-                y_reg = (op_code >> 20) - 0x240
-                x_reg = (op_code >> 16) - 0x2400 - (y_reg << 4)
-
-                self.register[x_reg] = self.register[y_reg]
-            else:
-                raise ValueError("Invalid op code")
+            self.load(op_code)
 
         elif op_code >> 28 == 0x3:
-            #"""Stores"""
-            if op_code >> 20 == 0x300:
-                #"""STM RX, HHLL"""
-                x_reg = (op_code >> 16) - 0x3000
-                hh_addr = op_code - ((op_code >> 8) << 8)
-                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            self.store(op_code)
 
-                addr = (hh_addr << 8) + ll_addr
-                self.mem[addr] = self.register[x_reg]
-            elif op_code >> 24 == 0x31:
-                #"""STM RX, HHLL"""
-                if op_code - ((op_code >> 16) << 16):
-                    raise ValueError("Invalid op code")
-                y_reg = (op_code >> 20) - 0x310
-                x_reg = (op_code >> 16) - (y_reg << 4) - 0x3100
+    def jump(self, op_code):
+        """Jumps"""
+        if op_code >> 16 == 0x1000:
+            #"""JMP HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
-                addr = self.register[y_reg]
-                self.mem[addr] = self.register[x_reg]
-            else:
+            self.program_counter = (hh_addr << 8) + ll_addr
+        elif op_code >> 24 == 0x13:
+            #"""JME RX, RY, HHLL"""
+            y_reg = (op_code >> 20) - 0x130
+            x_reg = ((op_code >> 16) - (y_reg << 4) - 0x1300)
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            if self.register[x_reg] == self.register[y_reg]:
+                self.program_counter = (hh_addr << 8) + ll_addr
+
+    def load(self, op_code):
+        """Loads"""
+        if op_code >> 20 == 0x200:
+            #"""LDI RX, HHLL"""
+            x_reg = (op_code >> 16) - 0x2000
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+            self.register[x_reg] = self.mem[addr]
+        elif op_code >> 16 == 0x2100:
+            #"""LDI SP, HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+            self.stack_pointer = self.mem[addr]
+        elif op_code >> 20 == 0x220:
+            #"""LDM RX, HHLL"""
+            x_reg = (op_code >> 16) - 0x2200
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+            self.register[x_reg] = self.mem[self.mem[addr]]
+        elif op_code >> 24 == 0x23:
+            #"""LDM RX, RY"""
+            if op_code - ((op_code >> 16) << 16):
                 raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x230
+            x_reg = (op_code >> 16) - 0x2300 - (y_reg << 4)
+
+            addr = self.register[y_reg]
+            self.register[x_reg] = self.mem[addr]
+        elif op_code >> 24 == 0x24:
+            #"""MOV RX, RY"""
+            if op_code - ((op_code >> 16) << 16):
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x240
+            x_reg = (op_code >> 16) - 0x2400 - (y_reg << 4)
+
+            self.register[x_reg] = self.register[y_reg]
+        else:
+            raise ValueError("Invalid op code")
+
+    def store(self, op_code):
+        """Stores"""
+        if op_code >> 20 == 0x300:
+            #"""STM RX, HHLL"""
+            x_reg = (op_code >> 16) - 0x3000
+            hh_addr = op_code - ((op_code >> 8) << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+            self.mem[addr] = self.register[x_reg]
+        elif op_code >> 24 == 0x31:
+            #"""STM RX, HHLL"""
+            if op_code - ((op_code >> 16) << 16):
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x310
+            x_reg = (op_code >> 16) - (y_reg << 4) - 0x3100
+
+            addr = self.register[y_reg]
+            self.mem[addr] = self.register[x_reg]
+        else:
+            raise ValueError("Invalid op code")
