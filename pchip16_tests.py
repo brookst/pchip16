@@ -55,6 +55,13 @@ class TestLoadCodes(TestVM):
         self.vmac.execute(0x23210000)
         self.assertEqual(self.vmac.register[0x1], 0x1)
         self.assertRaises(ValueError, self.vmac.execute, 0x23001234)
+    def test_MOV_RX_RY_instruction(self):
+        self.vmac.register[0x2] = 0x1234
+        self.vmac.execute(0x24210000)
+        self.assertEqual(self.vmac.register[0x1], 0x1234)
+        self.assertRaises(ValueError, self.vmac.execute, 0x24001234)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0x25000000)
 
 class TestStoreCodes(TestVM):
     def test_STM_RX_HHLL_instruction(self):
@@ -67,3 +74,5 @@ class TestStoreCodes(TestVM):
         self.vmac.execute(0x31210000)
         self.assertEqual(self.vmac.mem[0x2], 0x1)
         self.assertRaises(ValueError, self.vmac.execute, 0x31001234)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0x32000000)
