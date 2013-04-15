@@ -2,13 +2,15 @@
 pchip16 VM class
 """
 
+from array import array
+
 class VM(object):
     """Object representing a single virtual machine instance"""
     program_counter = 0
     stack_pointer = 0
     flags = 0
-    mem = bytearray(0 for i in range(2**16) )
-    register = bytearray(0 for i in range(16) )
+    mem = array('H', (0 for i in range(2**16) ) )
+    register = array('H', (0 for i in range(16) ) )
     def __init__(self):
         for reg in range(0xf):
             self.register[reg] = 0
@@ -52,6 +54,14 @@ class VM(object):
 
                 addr = (hh_addr << 8) + ll_addr
                 self.stack_pointer = self.mem[addr]
+            if op_code >> 20 == 0x220:
+                #"""LDM RX, HHLL"""
+                x_reg = (op_code >> 16) - 0x2200
+                hh_addr = op_code - (op_code >> 8 << 8)
+                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+                addr = (hh_addr << 8) + ll_addr
+                self.register[x_reg] = self.mem[self.mem[addr]]
 
         elif op_code >> 28 == 0x3:
             #"""Stores"""
