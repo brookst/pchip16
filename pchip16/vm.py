@@ -35,6 +35,15 @@ class VM(object):
                 if self.register[x_reg] == self.register[y_reg]:
                     self.program_counter = (hh_addr << 8) + ll_addr
 
+        elif op_code >> 28 == 0x2:
+            if op_code >> 20 == 0x200:
+                x_reg = (op_code >> 16) - 0x2000
+                hh_addr = op_code - (op_code >> 8 << 8)
+                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+                addr = (hh_addr << 8) + ll_addr
+                self.register[x_reg] = self.mem[addr]
+
         elif op_code >> 28 == 0x3:
             if op_code >> 20 == 0x300:
                 #"""STM RX, HHLL"""

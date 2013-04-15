@@ -32,6 +32,12 @@ class TestJumpCodes(TestVM):
         self.vmac.execute(0x13569078)
         self.assertEqual(0x1234, self.vmac.program_counter)
 
+class TestLoadCodes(TestVM):
+    def test_LDI_RX_HHLL_instruction(self):
+        self.vmac.mem[0x2345] = 0x1
+        self.vmac.execute(0x20014523)
+        self.assertEqual(self.vmac.register[0x1], 0x1)
+
 class TestStoreCodes(TestVM):
     def test_STM_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 0x1
