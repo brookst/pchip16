@@ -44,3 +44,10 @@ class VM(object):
 
                 addr = (hh_addr << 8) + ll_addr
                 self.mem[addr] = self.register[x_reg]
+            if op_code >> 24 == 0x31:
+                #"""STM RX, HHLL"""
+                y_reg = (op_code >> 20) - 0x310
+                x_reg = (op_code >> 16) - (y_reg << 4) - 0x3100
+
+                addr = self.register[y_reg]
+                self.mem[addr] = self.register[x_reg]
