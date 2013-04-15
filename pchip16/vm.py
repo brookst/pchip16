@@ -8,6 +8,9 @@ class VM(object):
     stack_ponter = 0
     flags = 0
     register = {}
+    def __init__(self):
+        for reg in range(0xf):
+            self.register[reg] = 0
     def step(self):
         """Execute instruction at self.program_counter and increment"""
         self.program_counter += 1
@@ -21,3 +24,13 @@ class VM(object):
                 ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
                 self.program_counter = (hh_addr << 8) + ll_addr
+            if op_code >> 24 == 0x13:
+                #"""JME RX, RY, HHLL"""
+                #13 YX LL HH
+                y_reg = (op_code >> 20) - 0x130
+                x_reg = ((op_code >> 16) - (y_reg << 4) - 0x1300)
+                hh_addr = op_code - (op_code >> 8 << 8)
+                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+                if self.register[x_reg] == self.register[y_reg]:
+                    self.program_counter = (hh_addr << 8) + ll_addr
