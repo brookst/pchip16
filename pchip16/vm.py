@@ -62,6 +62,15 @@ class VM(object):
 
                 addr = (hh_addr << 8) + ll_addr
                 self.register[x_reg] = self.mem[self.mem[addr]]
+            if op_code >> 24 == 0x23:
+                #"""LDM RX, RY"""
+                if op_code - ((op_code >> 16) << 16):
+                    raise ValueError("Invalid op code")
+                y_reg = (op_code >> 20) - 0x230
+                x_reg = (op_code >> 16) - 0x2300 - (y_reg << 4)
+
+                addr = self.register[y_reg]
+                self.register[x_reg] = self.mem[addr]
 
         elif op_code >> 28 == 0x3:
             #"""Stores"""
@@ -75,6 +84,8 @@ class VM(object):
                 self.mem[addr] = self.register[x_reg]
             if op_code >> 24 == 0x31:
                 #"""STM RX, HHLL"""
+                if op_code - ((op_code >> 16) << 16):
+                    raise ValueError("Invalid op code")
                 y_reg = (op_code >> 20) - 0x310
                 x_reg = (op_code >> 16) - (y_reg << 4) - 0x3100
 
