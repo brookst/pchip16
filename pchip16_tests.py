@@ -29,3 +29,8 @@ class TestVM(unittest.TestCase):
         vmac.register[0x6] = 0x1
         vmac.execute(0x13569078)
         self.assertEqual(0x1234, vmac.program_counter)
+    def test_STM_RX_HHLL_instruction(self):
+        vmac = VM()
+        vmac.register[0x1] = 0x1
+        vmac.execute(0x30014523)
+        self.assertEqual(vmac.mem[0x2345], 0x1)

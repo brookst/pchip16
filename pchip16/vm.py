@@ -7,7 +7,8 @@ class VM(object):
     program_counter = 0
     stack_ponter = 0
     flags = 0
-    register = {}
+    mem = bytearray(0 for i in range(2**16) )
+    register = bytearray(0 for i in range(16) )
     def __init__(self):
         for reg in range(0xf):
             self.register[reg] = 0
@@ -24,9 +25,8 @@ class VM(object):
                 ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
                 self.program_counter = (hh_addr << 8) + ll_addr
-            if op_code >> 24 == 0x13:
+            elif op_code >> 24 == 0x13:
                 #"""JME RX, RY, HHLL"""
-                #13 YX LL HH
                 y_reg = (op_code >> 20) - 0x130
                 x_reg = ((op_code >> 16) - (y_reg << 4) - 0x1300)
                 hh_addr = op_code - (op_code >> 8 << 8)
@@ -34,3 +34,13 @@ class VM(object):
 
                 if self.register[x_reg] == self.register[y_reg]:
                     self.program_counter = (hh_addr << 8) + ll_addr
+
+        elif op_code >> 28 == 0x3:
+            if op_code >> 20 == 0x300:
+                #"""STM RX, HHLL"""
+                x_reg = (op_code >> 16) - 0x3000
+                hh_addr = op_code - ((op_code >> 8) << 8)
+                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+                addr = (hh_addr << 8) + ll_addr
+                self.mem[addr] = self.register[x_reg]
