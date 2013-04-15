@@ -5,7 +5,7 @@ pchip16 VM class
 class VM(object):
     """Object representing a single virtual machine instance"""
     program_counter = 0
-    stack_ponter = 0
+    stack_pointer = 0
     flags = 0
     mem = bytearray(0 for i in range(2**16) )
     register = bytearray(0 for i in range(16) )
@@ -36,15 +36,25 @@ class VM(object):
                     self.program_counter = (hh_addr << 8) + ll_addr
 
         elif op_code >> 28 == 0x2:
+            #"""Loads"""
             if op_code >> 20 == 0x200:
+                #"""LDI RX, HHLL"""
                 x_reg = (op_code >> 16) - 0x2000
                 hh_addr = op_code - (op_code >> 8 << 8)
                 ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
                 addr = (hh_addr << 8) + ll_addr
                 self.register[x_reg] = self.mem[addr]
+            if op_code >> 16 == 0x2100:
+                #"""LDI SP, HHLL"""
+                hh_addr = op_code - (op_code >> 8 << 8)
+                ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+                addr = (hh_addr << 8) + ll_addr
+                self.stack_pointer = self.mem[addr]
 
         elif op_code >> 28 == 0x3:
+            #"""Stores"""
             if op_code >> 20 == 0x300:
                 #"""STM RX, HHLL"""
                 x_reg = (op_code >> 16) - 0x3000

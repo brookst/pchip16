@@ -37,6 +37,10 @@ class TestLoadCodes(TestVM):
         self.vmac.mem[0x2345] = 0x1
         self.vmac.execute(0x20014523)
         self.assertEqual(self.vmac.register[0x1], 0x1)
+    def test_LDI_SP_HHLL_instruction(self):
+        self.vmac.mem[0x2345] = 0x1
+        self.vmac.execute(0x21004523)
+        self.assertEqual(self.vmac.stack_pointer, 0x1)
 
 class TestStoreCodes(TestVM):
     def test_STM_RX_HHLL_instruction(self):
