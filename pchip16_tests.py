@@ -76,3 +76,29 @@ class TestStoreCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x31001234)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x32000000)
+
+class TestAdditionCodes(TestVM):
+    def test_ADDI_RX_HHLL_instructions(self):
+        self.vmac.register[0x1] = 0x23
+        self.vmac.mem[0x2345] = 0x07
+        self.vmac.execute(0x40014523)
+        self.assertEqual(self.vmac.register[0x1], 0x2a)
+        self.vmac.register[0x1] = 0x23
+        self.assertRaises(ValueError, self.vmac.execute, 0x32000000)
+    def test_ADD_RX_RY_instruction(self):
+        self.vmac.register[0x1] = 0x7
+        self.vmac.register[0x2] = 0x23
+        self.vmac.execute(0x41210000)
+        self.assertEqual(self.vmac.register[0x1], 0x2a)
+        self.assertRaises(ValueError, self.vmac.execute, 0x41001234)
+    def test_ADD_RX_RY_RZ_instruction(self):
+        self.vmac.register[0x1] = 0x7
+        self.vmac.register[0x2] = 0x20
+        self.vmac.register[0x3] = 0x3
+        self.vmac.execute(0x42210300)
+        self.assertEqual(self.vmac.register[0x1], 0x2a)
+        self.assertRaises(ValueError, self.vmac.execute, 0x42001000)
+        self.assertRaises(ValueError, self.vmac.execute, 0x42001023)
+        self.assertRaises(ValueError, self.vmac.execute, 0x42001023)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0x43000000)

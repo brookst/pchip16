@@ -4,6 +4,11 @@ pchip16 VM class
 
 from array import array
 
+CARRY = 0x1 << 1
+ZERO = 0x1 << 2
+OVERFLOW = 0x1 << 6
+NEGATIVE = 0x1 << 7
+
 class VM(object):
     """Object representing a single virtual machine instance"""
     program_counter = 0
@@ -21,7 +26,7 @@ class VM(object):
         self.program_counter += 1
 
     def execute(self, op_code):
-        """Carry out instruction sepcified by op_code"""
+        """Carry out instruction specified by op_code"""
         if op_code >> 28 == 0x1:
             self.jump(op_code)
 
@@ -30,6 +35,9 @@ class VM(object):
 
         elif op_code >> 28 == 0x3:
             self.store(op_code)
+
+        elif op_code >> 28 == 0x4:
+            self.add(op_code)
 
     def jump(self, op_code):
         """Jumps"""
@@ -113,5 +121,35 @@ class VM(object):
 
             addr = self.register[y_reg]
             self.mem[addr] = self.register[x_reg]
+        else:
+            raise ValueError("Invalid op code")
+    def add(self, op_code):
+        """Addition"""
+        if op_code >> 20 == 0x400:
+            #"""ADDI RX, HHLL"""
+            x_reg = (op_code >> 16) - 0x4000
+            hh_addr = op_code - ((op_code >> 8) << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+            self.register[x_reg] += self.mem[addr]
+        elif op_code >> 24 == 0x41:
+            #"""ADD RX, RY"""
+            if op_code - ((op_code >> 16) << 16):
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x410
+            x_reg = (op_code >> 16) - 0x4100 - (y_reg << 4)
+
+            self.register[x_reg] += self.register[y_reg]
+        elif op_code >> 24 == 0x42:
+            #"""ADD RX, RY, RZ"""
+            if op_code & 0x1011:
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x420
+            x_reg = (op_code >> 16) - 0x4200 - (y_reg << 4)
+            z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
+            print(hex(x_reg), hex(y_reg), hex(z_reg))
+
+            self.register[x_reg] += self.register[y_reg] + self.register[z_reg]
         else:
             raise ValueError("Invalid op code")
