@@ -1,7 +1,7 @@
 """
 pchip16 test runner
 """
-#pylint: disable=I0011, R0904, C0111
+#pylint: disable=I0011, R0904
 
 import unittest
 from pchip16 import VM

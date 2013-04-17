@@ -27,3 +27,15 @@ def _select_locals(frame, form_string, *selection):
         print(form %non_locals)
     finally:
         del frame
+
+def to_hex(deca):
+    """Return twos compliment hex from signed integer"""
+    if deca < 0:
+        return 0xFFFF & deca
+    return deca
+
+def to_dec(hexa):
+    """Return signed integer from twos compliment"""
+    if hexa > 0x7FFF:
+        return hexa - 0x10000
+    return hexa
