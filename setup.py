@@ -1,7 +1,13 @@
 """
 pchip16 setup routine
 """
+#pylint: disable=W0611
+
 from setuptools import setup
+try:
+    import multiprocessing
+except ImportError:
+    pass
 
 setup(name='pchip16',
       version='0.1',
