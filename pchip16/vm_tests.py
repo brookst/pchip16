@@ -5,6 +5,7 @@ pchip16 test runner
 
 import unittest
 from pchip16 import VM
+from pchip16.vm import CARRY, ZERO, OVERFLOW, NEGATIVE
 
 class TestVM(unittest.TestCase):
     """Test aspects of the virtual machine"""
@@ -77,14 +78,38 @@ class TestStoreCodes(TestVM):
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x32000000)
 
+class TestAddition(TestVM):
+    def test_add_16bit_pos(self):
+        self.vmac.flags |= OVERFLOW
+        self.vmac.flags |= CARRY
+        value = self.vmac.add_16bit(0x23, 0x07)
+        self.assertEqual(value, 0x2a)
+        self.assertFalse(self.vmac.flags & OVERFLOW)
+        self.assertFalse(self.vmac.flags & CARRY)
+    def test_add_16bit_pos_overflow(self):
+        self.vmac.flags |= CARRY
+        value = self.vmac.add_16bit(0x7FFF, 0x0001)
+        self.assertEqual(value, 0x8000)
+        self.assertTrue(self.vmac.flags & OVERFLOW)
+        self.assertFalse(self.vmac.flags & CARRY)
+    def test_add_16bit_neg(self):
+        self.vmac.flags |= OVERFLOW
+        value = self.vmac.add_16bit(0xFFFF, 0xFFFF)
+        self.assertEqual(value, 0xFFFE)
+        self.assertFalse(self.vmac.flags & OVERFLOW)
+        self.assertTrue(self.vmac.flags & CARRY)
+    def test_add_16bit_neg_overflow(self):
+        value = self.vmac.add_16bit(0xFFFF, 0x8000)
+        self.assertEqual(value, 0x7FFF)
+        self.assertTrue(self.vmac.flags & OVERFLOW)
+        self.assertTrue(self.vmac.flags & CARRY)
+
 class TestAdditionCodes(TestVM):
     def test_ADDI_RX_HHLL_instructions(self):
         self.vmac.register[0x1] = 0x23
         self.vmac.mem[0x2345] = 0x07
         self.vmac.execute(0x40014523)
         self.assertEqual(self.vmac.register[0x1], 0x2a)
-        self.vmac.register[0x1] = 0x23
-        self.assertRaises(ValueError, self.vmac.execute, 0x32000000)
     def test_ADD_RX_RY_instruction(self):
         self.vmac.register[0x1] = 0x7
         self.vmac.register[0x2] = 0x23
@@ -98,7 +123,7 @@ class TestAdditionCodes(TestVM):
         self.vmac.execute(0x42210300)
         self.assertEqual(self.vmac.register[0x1], 0x2a)
         self.assertRaises(ValueError, self.vmac.execute, 0x42001000)
-        self.assertRaises(ValueError, self.vmac.execute, 0x42001023)
+        self.assertRaises(ValueError, self.vmac.execute, 0x42000023)
         self.assertRaises(ValueError, self.vmac.execute, 0x42001023)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x43000000)

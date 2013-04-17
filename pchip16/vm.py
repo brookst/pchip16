@@ -123,6 +123,30 @@ class VM(object):
             self.mem[addr] = self.register[x_reg]
         else:
             raise ValueError("Invalid op code")
+
+    def add_16bit(self, *values):
+        """16 bit signed addition operation"""
+        value = sum(values)
+        if value > 0x10000:
+            self.flags |= CARRY
+            if value & 0x8000:
+                value -= 0x10000
+                self.flags &= ~OVERFLOW
+            else:
+                #Sign overflow!!!
+                value -= 0x10000
+                self.flags |= OVERFLOW
+                print('Sign overflow')
+        else:
+            self.flags &= ~CARRY
+            if value & 0x8000:
+                #Sign overflow!!!
+                self.flags |= OVERFLOW
+                print('Sign overflow')
+            else:
+                self.flags &= ~OVERFLOW
+        return value
+
     def add(self, op_code):
         """Addition"""
         if op_code >> 20 == 0x400:
@@ -132,7 +156,10 @@ class VM(object):
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
-            self.register[x_reg] += self.mem[addr]
+            print(hex(self.register[x_reg] + self.mem[addr]))
+
+            value = self.add_16bit(self.register[x_reg], self.mem[addr])
+            self.register[x_reg] = value
         elif op_code >> 24 == 0x41:
             #"""ADD RX, RY"""
             if op_code - ((op_code >> 16) << 16):
@@ -140,7 +167,8 @@ class VM(object):
             y_reg = (op_code >> 20) - 0x410
             x_reg = (op_code >> 16) - 0x4100 - (y_reg << 4)
 
-            self.register[x_reg] += self.register[y_reg]
+            value = self.add_16bit(self.register[x_reg], self.register[y_reg])
+            self.register[x_reg] = value
         elif op_code >> 24 == 0x42:
             #"""ADD RX, RY, RZ"""
             if op_code & 0x1011:
@@ -150,6 +178,7 @@ class VM(object):
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
             print(hex(x_reg), hex(y_reg), hex(z_reg))
 
-            self.register[x_reg] += self.register[y_reg] + self.register[z_reg]
+            self.register[x_reg] = self.add_16bit(self.register[x_reg],
+                    self.register[y_reg], self.register[z_reg])
         else:
             raise ValueError("Invalid op code")
