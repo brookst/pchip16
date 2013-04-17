@@ -128,23 +128,41 @@ class VM(object):
         """16 bit signed addition operation"""
         value = sum(values)
         if value > 0x10000:
+            # Set the CARRY flag as bit 16 is set
             self.flags |= CARRY
             if value & 0x8000:
+                # Remove bit 16
                 value -= 0x10000
+                # Clear OVERFLOW flag
                 self.flags &= ~OVERFLOW
             else:
-                #Sign overflow!!!
+                # Remove bit 16
                 value -= 0x10000
+                # Set OVERFLOW flag
                 self.flags |= OVERFLOW
-                print('Sign overflow')
-        else:
+        elif value < 0x10000:
+            # Clear CARRY bit
             self.flags &= ~CARRY
             if value & 0x8000:
-                #Sign overflow!!!
+                # Set OVERFLOW flag
                 self.flags |= OVERFLOW
-                print('Sign overflow')
             else:
+                # Clear OVERFLOW flag
                 self.flags &= ~OVERFLOW
+        else:
+            value -= 0x10000
+            self.flags &= ~CARRY
+            self.flags &= ~OVERFLOW
+        # Set/clear ZERO flag if value is zero/non-zero
+        if value == 0x0:
+            self.flags |= ZERO
+        else:
+            self.flags &= ~ZERO
+        # Set/clear NEGATIVE flag if value is negative/non-negative
+        if value & 0x8000:
+            self.flags |= NEGATIVE
+        else:
+            self.flags &= ~NEGATIVE
         return value
 
     def add(self, op_code):

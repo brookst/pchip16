@@ -79,30 +79,46 @@ class TestStoreCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x32000000)
 
 class TestAddition(TestVM):
+    def test_add_16bit_zero(self):
+        self.vmac.flags |= OVERFLOW | CARRY | NEGATIVE
+        value = self.vmac.add_16bit(0xFFF9, 0x07)
+        self.assertEqual(value, 0x0)
+        self.assertFalse(self.vmac.flags & OVERFLOW)
+        self.assertFalse(self.vmac.flags & CARRY)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_add_16bit_pos(self):
-        self.vmac.flags |= OVERFLOW
-        self.vmac.flags |= CARRY
+        self.vmac.flags |= OVERFLOW | CARRY | ZERO | NEGATIVE
         value = self.vmac.add_16bit(0x23, 0x07)
         self.assertEqual(value, 0x2a)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_add_16bit_pos_overflow(self):
-        self.vmac.flags |= CARRY
+        self.vmac.flags |= CARRY | ZERO
         value = self.vmac.add_16bit(0x7FFF, 0x0001)
         self.assertEqual(value, 0x8000)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
     def test_add_16bit_neg(self):
-        self.vmac.flags |= OVERFLOW
+        self.vmac.flags |= OVERFLOW | ZERO
         value = self.vmac.add_16bit(0xFFFF, 0xFFFF)
         self.assertEqual(value, 0xFFFE)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
     def test_add_16bit_neg_overflow(self):
+        self.vmac.flags |= ZERO | NEGATIVE
         value = self.vmac.add_16bit(0xFFFF, 0x8000)
         self.assertEqual(value, 0x7FFF)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
 
 class TestAdditionCodes(TestVM):
     def test_ADDI_RX_HHLL_instructions(self):
