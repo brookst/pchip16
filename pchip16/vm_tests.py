@@ -134,10 +134,9 @@ class TestAdditionCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x41001234)
     def test_ADD_RX_RY_RZ_instruction(self):
         self.vmac.register[0x1] = 0x7
-        self.vmac.register[0x2] = 0x20
-        self.vmac.register[0x3] = 0x3
+        self.vmac.register[0x2] = 0x23
         self.vmac.execute(0x42210300)
-        self.assertEqual(self.vmac.register[0x1], 0x2a)
+        self.assertEqual(self.vmac.register[0x3], 0x2a)
         self.assertRaises(ValueError, self.vmac.execute, 0x42001000)
         self.assertRaises(ValueError, self.vmac.execute, 0x42000023)
         self.assertRaises(ValueError, self.vmac.execute, 0x42001023)

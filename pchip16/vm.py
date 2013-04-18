@@ -196,7 +196,7 @@ class VM(object):
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
             print(hex(x_reg), hex(y_reg), hex(z_reg))
 
-            self.register[x_reg] = self.add_16bit(self.register[x_reg],
-                    self.register[y_reg], self.register[z_reg])
+            self.register[z_reg] = self.add_16bit(self.register[x_reg],
+                    self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
