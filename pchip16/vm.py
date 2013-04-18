@@ -124,9 +124,9 @@ class VM(object):
         else:
             raise ValueError("Invalid op code")
 
-    def add_16bit(self, *values):
+    def add_16bit(self, left, right):
         """16 bit signed addition operation"""
-        value = sum(values)
+        value = left + right
         if value > 0x10000:
             # Set the CARRY flag as bit 16 is set
             self.flags |= CARRY
@@ -165,6 +165,60 @@ class VM(object):
             self.flags &= ~NEGATIVE
         return value
 
+    def sub_16bit(self, left, right):
+        """16 bit signed subtraction operation"""
+        print(hex(left), hex(right) )
+        if right & 0x8000:
+            right = (0xFFFF ^ right) + 1
+        else:
+            right = 0xFFFF ^ (right - 1)
+        print(hex(left), hex(right) )
+
+        value = left + right
+        print(hex(left),hex(right),hex(value))
+        if value > 0x10000:
+            # Set the CARRY flag as bit 16 is set
+            self.flags &= ~CARRY
+            if value & 0x8000:
+                print('branch1')
+                # Remove bit 16
+                value -= 0x10000
+                # Clear OVERFLOW flag
+                self.flags |= OVERFLOW
+            else:
+                print('branch2')
+                # Remove bit 16
+                value -= 0x10000
+                # Set OVERFLOW flag
+                self.flags &= ~OVERFLOW
+        elif value < 0x10000:
+            # Clear CARRY bit
+            self.flags |= CARRY
+            if value & 0x8000:
+                print('branch3')
+                # Set OVERFLOW flag
+                self.flags |= OVERFLOW
+            else:
+                print('branch4')
+                # Clear OVERFLOW flag
+                self.flags &= ~OVERFLOW
+        else:
+            print('branch5')
+            value -= 0x10000
+            self.flags &= ~CARRY
+            self.flags &= ~OVERFLOW
+        # Set/clear ZERO flag if value is zero/non-zero
+        if value == 0x0:
+            self.flags |= ZERO
+        else:
+            self.flags &= ~ZERO
+        # Set/clear NEGATIVE flag if value is negative/non-negative
+        if value & 0x8000:
+            self.flags |= NEGATIVE
+        else:
+            self.flags &= ~NEGATIVE
+        return value
+
     def add(self, op_code):
         """Addition"""
         if op_code >> 20 == 0x400:
@@ -174,7 +228,6 @@ class VM(object):
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
-            print(hex(self.register[x_reg] + self.mem[addr]))
 
             value = self.add_16bit(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
@@ -194,9 +247,43 @@ class VM(object):
             y_reg = (op_code >> 20) - 0x420
             x_reg = (op_code >> 16) - 0x4200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
-            print(hex(x_reg), hex(y_reg), hex(z_reg))
 
             self.register[z_reg] = self.add_16bit(self.register[x_reg],
+                    self.register[y_reg])
+        else:
+            raise ValueError("Invalid op code")
+
+    def sub(self, op_code):
+        """Subtraction"""
+        if op_code >> 20 == 0x500:
+            #"""SUBI RX, HHLL"""
+            x_reg = (op_code >> 16) - 0x5000
+            hh_addr = op_code - ((op_code >> 8) << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+            print(hex(self.register[x_reg] + self.mem[addr]))
+
+            value = self.sub_16bit(self.register[x_reg], self.mem[addr])
+            self.register[x_reg] = value
+        elif op_code >> 24 == 0x51:
+            #"""SUB RX, RY"""
+            if op_code - ((op_code >> 16) << 16):
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x510
+            x_reg = (op_code >> 16) - 0x5100 - (y_reg << 4)
+
+            self.register[x_reg] = self.sub_16bit(self.register[x_reg],
+                    self.register[y_reg])
+        elif op_code >> 24 == 0x52:
+            #"""SUB RX, RY, RZ"""
+            if op_code & 0x1011:
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x520
+            x_reg = (op_code >> 16) - 0x5200 - (y_reg << 4)
+            z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
+
+            self.register[z_reg] = self.sub_16bit(self.register[x_reg],
                     self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
