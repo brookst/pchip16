@@ -80,41 +80,41 @@ class TestStoreCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x32000000)
 
 class TestAddition(TestVM):
-    def test_add_16bit_zero(self):
+    def test_add_op_zero(self):
         self.vmac.flags |= OVERFLOW | CARRY | NEGATIVE
-        value = self.vmac.add_16bit(0xFFF9, 0x07)
+        value = self.vmac.add_op(0xFFF9, 0x07)
         self.assertEqual(value, 0x0)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_add_16bit_pos(self):
+    def test_add_op_pos(self):
         self.vmac.flags |= OVERFLOW | CARRY | ZERO | NEGATIVE
-        value = self.vmac.add_16bit(0x23, 0x07)
+        value = self.vmac.add_op(0x23, 0x07)
         self.assertEqual(value, 0x2a)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_add_16bit_pos_overflow(self):
+    def test_add_op_pos_overflow(self):
         self.vmac.flags |= CARRY | ZERO
-        value = self.vmac.add_16bit(0x7FFF, 0x0001)
+        value = self.vmac.add_op(0x7FFF, 0x0001)
         self.assertEqual(value, 0x8000)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
-    def test_add_16bit_neg(self):
+    def test_add_op_neg(self):
         self.vmac.flags |= OVERFLOW | ZERO
-        value = self.vmac.add_16bit(0xFFFF, 0xFFFF)
+        value = self.vmac.add_op(0xFFFF, 0xFFFF)
         self.assertEqual(value, 0xFFFE)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
-    def test_add_16bit_neg_overflow(self):
+    def test_add_op_neg_overflow(self):
         self.vmac.flags |= ZERO | NEGATIVE
-        value = self.vmac.add_16bit(0xFFFF, 0x8000)
+        value = self.vmac.add_op(0xFFFF, 0x8000)
         self.assertEqual(value, 0x7FFF)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
@@ -146,82 +146,82 @@ class TestAdditionCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x43000000)
 
 class TestSubtraction(TestVM):
-    def test_sub_16bit_zero_zero_zero(self):
+    def test_sub_op_zero_zero_zero(self):
         # Subtract 0 from 0
         self.vmac.flags |= OVERFLOW | CARRY | NEGATIVE
-        value = self.vmac.sub_16bit(0,0)
+        value = self.vmac.sub_op(0,0)
         self.assertEqual(value, 0)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_sub_16bit_pos_pos_zero(self):
+    def test_sub_op_pos_pos_zero(self):
         # Subtract 7 from 7
         self.vmac.flags |= OVERFLOW | CARRY | NEGATIVE
-        value = self.vmac.sub_16bit(7,7)
+        value = self.vmac.sub_op(7,7)
         self.assertEqual(value, 0x0)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_sub_16bit_pos_zero_pos(self):
+    def test_sub_op_pos_zero_pos(self):
         # Subtract 0 from 7
         self.vmac.flags |= OVERFLOW | CARRY | ZERO | NEGATIVE
-        value = self.vmac.sub_16bit(7,0)
+        value = self.vmac.sub_op(7,0)
         self.assertEqual(value, 7)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_sub_16bit_pos_pos_pos(self):
+    def test_sub_op_pos_pos_pos(self):
         # Subtract 7 from 49
         self.vmac.flags |= OVERFLOW | CARRY | ZERO | NEGATIVE
-        value = self.vmac.sub_16bit(49, 7)
+        value = self.vmac.sub_op(49, 7)
         self.assertEqual(value, 42)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_sub_16bit_pos_pos_neg(self):
+    def test_sub_op_pos_pos_neg(self):
         # Subtract 49 from 7
         self.vmac.flags |= OVERFLOW | ZERO
-        value = self.vmac.sub_16bit(7, 49)
+        value = self.vmac.sub_op(7, 49)
         self.assertEqual(value, utils.to_hex(-42) )
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
-    def test_sub_16bit_neg_pos_pos_underflow(self):
+    def test_sub_op_neg_pos_pos_underflow(self):
         # Subtract POS_MAX from -2
         self.vmac.flags |= CARRY | ZERO | NEGATIVE
-        value = self.vmac.sub_16bit(utils.to_hex(-2), 0x7FFF)
+        value = self.vmac.sub_op(utils.to_hex(-2), 0x7FFF)
         self.assertEqual(value, 0x7FFF)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_sub_16bit_pos_neg_neg_overflow(self):
+    def test_sub_op_pos_neg_neg_overflow(self):
         # Subtract -2 from POS_MAX
         self.vmac.flags |= ZERO
-        value = self.vmac.sub_16bit(0x7FFF, utils.to_hex(-2) )
+        value = self.vmac.sub_op(0x7FFF, utils.to_hex(-2) )
         self.assertEqual(value, 0x8001)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
-    def test_sub_16bit_neg_pos_pos_overflow(self):
+    def test_sub_op_neg_pos_pos_overflow(self):
         # Subtract 1 from NEG_MIN
         self.vmac.flags |= ZERO | NEGATIVE
-        value = self.vmac.sub_16bit(0x8000, 0x1)
+        value = self.vmac.sub_op(0x8000, 0x1)
         self.assertEqual(value, 0x7FFF)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_sub_16bit_pos_neg_pos_underflow(self):
+    def test_sub_op_pos_neg_pos_underflow(self):
         # Subtract 1 from NEG_MIN
         self.vmac.flags |= ZERO | NEGATIVE
-        value = self.vmac.sub_16bit(0x1, 0x8000)
+        value = self.vmac.sub_op(0x1, 0x8000)
         self.assertEqual(value, 0x8001)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)

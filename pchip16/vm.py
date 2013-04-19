@@ -128,7 +128,7 @@ class VM(object):
         else:
             raise ValueError("Invalid op code")
 
-    def add_16bit(self, left, right):
+    def add_op(self, left, right):
         """16 bit signed addition operation"""
         value = left + right
         if value >= 0x10000:
@@ -161,10 +161,10 @@ class VM(object):
             self.flags &= ~NEGATIVE
         return value
 
-    def sub_16bit(self, left, right):
+    def sub_op(self, left, right):
         """16 bit signed subtraction operation"""
         right = complement(right)
-        value = self.add_16bit(left, right)
+        value = self.add_op(left, right)
         if right == 0x8000:
             self.flags ^= OVERFLOW
         self.flags ^= CARRY
@@ -182,7 +182,7 @@ class VM(object):
 
             addr = (hh_addr << 8) + ll_addr
 
-            value = self.add_16bit(self.register[x_reg], self.mem[addr])
+            value = self.add_op(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x41:
             #"""ADD RX, RY"""
@@ -191,7 +191,7 @@ class VM(object):
             y_reg = (op_code >> 20) - 0x410
             x_reg = (op_code >> 16) - 0x4100 - (y_reg << 4)
 
-            value = self.add_16bit(self.register[x_reg], self.register[y_reg])
+            value = self.add_op(self.register[x_reg], self.register[y_reg])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x42:
             #"""ADD RX, RY, RZ"""
@@ -201,7 +201,7 @@ class VM(object):
             x_reg = (op_code >> 16) - 0x4200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
-            self.register[z_reg] = self.add_16bit(self.register[x_reg],
+            self.register[z_reg] = self.add_op(self.register[x_reg],
                     self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
@@ -218,7 +218,7 @@ class VM(object):
 
             addr = (hh_addr << 8) + ll_addr
 
-            value = self.sub_16bit(self.register[x_reg], self.mem[addr])
+            value = self.sub_op(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x51:
             #"""SUB RX, RY"""
@@ -227,7 +227,7 @@ class VM(object):
             y_reg = (op_code >> 20) - 0x510
             x_reg = (op_code >> 16) - 0x5100 - (y_reg << 4)
 
-            self.register[x_reg] = self.sub_16bit(self.register[x_reg],
+            self.register[x_reg] = self.sub_op(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 24 == 0x52:
             #"""SUB RX, RY, RZ"""
@@ -237,7 +237,7 @@ class VM(object):
             x_reg = (op_code >> 16) - 0x5200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
-            self.register[z_reg] = self.sub_16bit(self.register[x_reg],
+            self.register[z_reg] = self.sub_op(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 20 == 0x530:
             #"""CMPI RX, HHLL"""
@@ -249,7 +249,7 @@ class VM(object):
 
             addr = (hh_addr << 8) + ll_addr
 
-            self.sub_16bit(self.register[x_reg], self.mem[addr])
+            self.sub_op(self.register[x_reg], self.mem[addr])
         elif op_code >> 24 == 0x54:
             #"""CMP RX, RY"""
             if op_code - ((op_code >> 16) << 16):
@@ -257,6 +257,6 @@ class VM(object):
             y_reg = (op_code >> 20) - 0x540
             x_reg = (op_code >> 16) - 0x5400 - (y_reg << 4)
 
-            self.sub_16bit(self.register[x_reg], self.register[y_reg])
+            self.sub_op(self.register[x_reg], self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
