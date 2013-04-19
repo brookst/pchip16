@@ -403,3 +403,27 @@ class TestBitwiseXor(TestVM):
         self.assertEqual(value, 0x6666)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
+
+class TestBitwiseXorCodes(TestVM):
+    def test_XORI_RX_HHLL_instructions(self):
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.mem[0x2345] = 0x3333
+        self.vmac.execute(0x80014523)
+        self.assertEqual(self.vmac.register[0x1], 0x5555)
+        self.assertRaises(ValueError, self.vmac.execute, 0x80100000)
+    def test_XOR_RX_RY_instruction(self):
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.register[0x2] = 0x3333
+        self.vmac.execute(0x81210000)
+        self.assertEqual(self.vmac.register[0x1], 0x5555)
+        self.assertRaises(ValueError, self.vmac.execute, 0x81001234)
+    def test_XOR_RX_RY_RZ_instruction(self):
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.register[0x2] = 0x3333
+        self.vmac.execute(0x82210300)
+        self.assertEqual(self.vmac.register[0x3], 0x5555)
+        self.assertRaises(ValueError, self.vmac.execute, 0x82001000)
+        self.assertRaises(ValueError, self.vmac.execute, 0x82000023)
+        self.assertRaises(ValueError, self.vmac.execute, 0x82001023)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0x83000000)
