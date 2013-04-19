@@ -619,27 +619,24 @@ class TestStackCodes(TestVM):
         self.assertEqual(self.vmac.register[1], 0xAAAA)
         self.assertEqual(self.vmac.stack_pointer, 0xFDF0)
         self.assertRaises(ValueError, self.vmac.execute, 0xC1001234)
+    def pattern(self, x):
+        return (x << 12) + (x << 8) + (x << 4) + x
     def test_PUSHALL_instruction(self):
         for i in range(16):
-            self.vmac.register[i] = (i << 12) + (i << 8) + (i << 4) + i
+            self.vmac.register[i] = self.pattern(i)
         self.vmac.execute(0xC2000000)
         for i in range(16):
-            value = (i << 4) + i
-            self.assertEqual(self.vmac.mem[0xFDF0 + 2 * i], value)
-            self.assertEqual(self.vmac.mem[0xFDF0 + 2 * i + 1], value)
+            self.assertEqual(self.vmac.mem[0xFDF0 + 2 * i], self.pattern(i) )
         self.assertEqual(self.vmac.stack_pointer, 0xFE10)
         self.assertRaises(ValueError, self.vmac.execute, 0xC2123456)
     def test_POPALL_instruction(self):
         self.vmac.stack_pointer = 0xFDF0 + 32
         for i in range(16):
-            value = (i << 4) + i
-            self.vmac.mem[0xFDF0 + 2 * i] = value
-            self.vmac.mem[0xFDF0 + 2 * i + 1] = value
+            self.vmac.mem[0xFDF0 + 2 * i] = self.pattern(i)
         self.vmac.execute(0xC3000000)
         self.assertEqual(self.vmac.stack_pointer, 0xFDF0)
         for i in range(16):
-            value = (i << 12) + (i << 8) + (i << 4) + i
-            self.assertEqual(self.vmac.register[i], value)
+            self.assertEqual(self.vmac.register[i], self.pattern(i) )
         self.assertRaises(ValueError, self.vmac.execute, 0xC3123456)
     def test_PUSHF_instruction(self):
         self.vmac.flags = 0xAAAA

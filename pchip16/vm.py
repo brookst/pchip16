@@ -7,7 +7,7 @@ ZERO = 0x1 << 2
 OVERFLOW = 0x1 << 6
 NEGATIVE = 0x1 << 7
 
-from array import array
+from .memory import Memory, Register
 from .utils import is_neg, complement, to_dec, to_hex
 
 def mask_code(op_code, mask):
@@ -20,8 +20,8 @@ class VM(object):
     program_counter = 0
     stack_pointer = 0xFDF0
     flags = 0
-    mem = array('H', (0 for i in range(2**16) ) )
-    register = array('H', (0 for i in range(16) ) )
+    mem = Memory()
+    register = Register()
 
     def __init__(self):
         for reg in range(0xf):
@@ -578,8 +578,7 @@ class VM(object):
             mask_code(op_code, 0xFFFFFF)
 
             for i, register in enumerate(self.register):
-                self.mem[self.stack_pointer + 2 * i] = register & 0x00FF
-                self.mem[self.stack_pointer + 2 * i + 1] = register >> 8
+                self.mem[self.stack_pointer + 2 * i] = register
 
             self.stack_pointer += 32
         elif op_code >> 24 == 0xC3:
@@ -588,9 +587,7 @@ class VM(object):
 
             self.stack_pointer -= 32
             for i in range(16):
-                high = self.mem[self.stack_pointer + 2 * i]
-                low = self.mem[self.stack_pointer + 2 * i + 1]
-                self.register[i] = (high << 8) + low
+                self.register[i] = self.mem[self.stack_pointer + 2 * i]
         elif op_code >> 20 == 0xC40:
             #"""PUSHF"""
             mask_code(op_code, 0xFFFFFF)
