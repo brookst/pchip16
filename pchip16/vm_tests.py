@@ -127,6 +127,7 @@ class TestAdditionCodes(TestVM):
         self.vmac.mem[0x2345] = 0x07
         self.vmac.execute(0x40014523)
         self.assertEqual(self.vmac.register[0x1], 0x2a)
+        self.assertRaises(ValueError, self.vmac.execute, 0x40100000)
     def test_ADD_RX_RY_instruction(self):
         self.vmac.register[0x1] = 0x7
         self.vmac.register[0x2] = 0x23
@@ -226,3 +227,51 @@ class TestSubtraction(TestVM):
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
+
+class TestSubtractionCodes(TestVM):
+    def test_SUBI_RX_HHLL_instructions(self):
+        self.vmac.register[0x1] = 49
+        self.vmac.mem[0x2345] = 7
+        self.vmac.execute(0x50014523)
+        self.assertEqual(self.vmac.register[0x1], 42)
+        self.assertRaises(ValueError, self.vmac.execute, 0x50100000)
+    def test_SUB_RX_RY_instruction(self):
+        self.vmac.register[0x1] = 7
+        self.vmac.register[0x2] = 49
+        self.vmac.execute(0x51210000)
+        self.assertEqual(self.vmac.register[0x1], utils.complement(42) )
+        self.assertRaises(ValueError, self.vmac.execute, 0x51001234)
+    def test_SUB_RX_RY_RZ_instruction(self):
+        self.vmac.register[0x1] = 7
+        self.vmac.register[0x2] = 49
+        self.vmac.execute(0x52210300)
+        self.assertEqual(self.vmac.register[0x3], utils.complement(42) )
+        self.assertRaises(ValueError, self.vmac.execute, 0x52001000)
+        self.assertRaises(ValueError, self.vmac.execute, 0x52000023)
+        self.assertRaises(ValueError, self.vmac.execute, 0x52001023)
+    def test_CMPI_RX_HHLL_instructions(self):
+        self.vmac.register[0x1] = 7
+        self.vmac.mem[0x2345] = 49
+        self.vmac.execute(0x53014523)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
+        self.vmac.register[0x1] = 7
+        self.vmac.mem[0x2345] = 7
+        self.vmac.execute(0x53014523)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0x53100000)
+    def test_CMPI_RX_RY_instructions(self):
+        self.vmac.register[0x1] = 7
+        self.vmac.register[0x2] = 49
+        self.vmac.execute(0x54210000)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
+        self.vmac.register[0x1] = 7
+        self.vmac.register[0x2] = 7
+        self.vmac.execute(0x54210000)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0x54001234)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0x55000000)

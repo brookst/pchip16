@@ -40,6 +40,9 @@ class VM(object):
         elif op_code >> 28 == 0x4:
             self.add(op_code)
 
+        elif op_code >> 28 == 0x5:
+            self.sub(op_code)
+
     def jump(self, op_code):
         """Jumps"""
         if op_code >> 16 == 0x1000:
@@ -171,6 +174,8 @@ class VM(object):
         """Addition"""
         if op_code >> 20 == 0x400:
             #"""ADDI RX, HHLL"""
+            if op_code & 0xF00000:
+                raise ValueError("Invalid op code")
             x_reg = (op_code >> 16) - 0x4000
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
@@ -190,7 +195,7 @@ class VM(object):
             self.register[x_reg] = value
         elif op_code >> 24 == 0x42:
             #"""ADD RX, RY, RZ"""
-            if op_code & 0x1011:
+            if op_code & 0xF0FF:
                 raise ValueError("Invalid op code")
             y_reg = (op_code >> 20) - 0x420
             x_reg = (op_code >> 16) - 0x4200 - (y_reg << 4)
@@ -205,6 +210,8 @@ class VM(object):
         """Subtraction"""
         if op_code >> 20 == 0x500:
             #"""SUBI RX, HHLL"""
+            if op_code & 0xF00000:
+                raise ValueError("Invalid op code")
             x_reg = (op_code >> 16) - 0x5000
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
@@ -224,7 +231,7 @@ class VM(object):
                     self.register[y_reg])
         elif op_code >> 24 == 0x52:
             #"""SUB RX, RY, RZ"""
-            if op_code & 0x1011:
+            if op_code & 0xF0FF:
                 raise ValueError("Invalid op code")
             y_reg = (op_code >> 20) - 0x520
             x_reg = (op_code >> 16) - 0x5200 - (y_reg << 4)
@@ -232,5 +239,24 @@ class VM(object):
 
             self.register[z_reg] = self.sub_16bit(self.register[x_reg],
                     self.register[y_reg])
+        elif op_code >> 20 == 0x530:
+            #"""CMPI RX, HHLL"""
+            if op_code & 0xF00000:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code >> 16) - 0x5300
+            hh_addr = op_code - ((op_code >> 8) << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+
+            self.sub_16bit(self.register[x_reg], self.mem[addr])
+        elif op_code >> 24 == 0x54:
+            #"""CMP RX, RY"""
+            if op_code - ((op_code >> 16) << 16):
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x540
+            x_reg = (op_code >> 16) - 0x5400 - (y_reg << 4)
+
+            self.sub_16bit(self.register[x_reg], self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
