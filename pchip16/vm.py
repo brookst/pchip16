@@ -8,12 +8,17 @@ OVERFLOW = 0x1 << 6
 NEGATIVE = 0x1 << 7
 
 from array import array
-from .utils import is_neg, complement
+from .utils import is_neg, complement, to_dec, to_hex
+
+def mask_code(op_code, mask):
+    """Raise error for op_codes in mask"""
+    if op_code & mask:
+        raise ValueError("Invalid op code %s" %hex(op_code) )
 
 class VM(object):
     """Object representing a single virtual machine instance"""
     program_counter = 0
-    stack_pointer = 0
+    stack_pointer = 0xFDF0
     flags = 0
     mem = array('H', (0 for i in range(2**16) ) )
     register = array('H', (0 for i in range(16) ) )
@@ -41,6 +46,7 @@ class VM(object):
             self.mul,
             self.div,
             self.shift,
+            self.stack,
         ]
         try:
             instruction = instructions[op_code >> 28]
@@ -137,7 +143,7 @@ class VM(object):
         else:
             raise ValueError("Invalid op code")
 
-    def add_op(self, left, right):
+    def _add(self, left, right):
         """16 bit signed addition operation"""
         value = left + right
         if value >= 0x10000:
@@ -173,31 +179,31 @@ class VM(object):
             self.flags &= ~NEGATIVE
         return value
 
-    def sub_op(self, left, right):
+    def _sub(self, left, right):
         """16 bit signed subtraction operation"""
         right = complement(right)
-        value = self.add_op(left, right)
+        value = self._add(left, right)
         if right == 0x8000:
             self.flags ^= OVERFLOW
         self.flags ^= CARRY
         return value
 
-    def and_op(self, left, right):
+    def _and(self, left, right):
         """Bitwise and operation"""
         value = left & right
         return self.flag_set(value)
 
-    def or_op(self, left, right):
+    def _or(self, left, right):
         """Bitwise or operation"""
         value = left | right
         return self.flag_set(value)
 
-    def xor_op(self, left, right):
+    def _xor(self, left, right):
         """Bitwise xor operation"""
         value = left ^ right
         return self.flag_set(value)
 
-    def mul_op(self, left, right):
+    def _mul(self, left, right):
         """16 bit signed multiplication"""
         if is_neg(right):
             left = complement(left)
@@ -213,15 +219,12 @@ class VM(object):
             self.flags &= ~CARRY
         return self.flag_set(value)
 
-    def div_op(self, left, right):
+    def _div(self, left, right):
         """Division"""
-        import pchip16.utils as utils
-        print(utils.to_dec(left), utils.to_dec(right))
-        left = utils.to_dec(left)
-        right = utils.to_dec(right)
+        left = to_dec(left)
+        right = to_dec(right)
         value = left // right
-        value = utils.to_hex(value)
-        print(utils.to_dec(left), utils.to_dec(right), utils.to_dec(value))
+        value = to_hex(value)
         if left % right:
             self.flags |= CARRY
         else:
@@ -232,34 +235,31 @@ class VM(object):
         """Addition"""
         if op_code >> 20 == 0x400:
             #"""ADDI RX, HHLL"""
-            if op_code & 0xF00000:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x4000
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
 
-            value = self.add_op(self.register[x_reg], self.mem[addr])
+            value = self._add(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x41:
             #"""ADD RX, RY"""
-            if op_code - ((op_code >> 16) << 16):
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             y_reg = (op_code >> 20) - 0x410
             x_reg = (op_code >> 16) - 0x4100 - (y_reg << 4)
 
-            value = self.add_op(self.register[x_reg], self.register[y_reg])
+            value = self._add(self.register[x_reg], self.register[y_reg])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x42:
             #"""ADD RX, RY, RZ"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             y_reg = (op_code >> 20) - 0x420
             x_reg = (op_code >> 16) - 0x4200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
-            self.register[z_reg] = self.add_op(self.register[x_reg],
+            self.register[z_reg] = self._add(self.register[x_reg],
                     self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
@@ -268,54 +268,49 @@ class VM(object):
         """Subtraction"""
         if op_code >> 20 == 0x500:
             #"""SUBI RX, HHLL"""
-            if op_code & 0xF00000:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x5000
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
 
-            value = self.sub_op(self.register[x_reg], self.mem[addr])
+            value = self._sub(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x51:
             #"""SUB RX, RY"""
-            if op_code - ((op_code >> 16) << 16):
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             y_reg = (op_code >> 20) - 0x510
             x_reg = (op_code >> 16) - 0x5100 - (y_reg << 4)
 
-            self.register[x_reg] = self.sub_op(self.register[x_reg],
+            self.register[x_reg] = self._sub(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 24 == 0x52:
             #"""SUB RX, RY, RZ"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             y_reg = (op_code >> 20) - 0x520
             x_reg = (op_code >> 16) - 0x5200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
-            self.register[z_reg] = self.sub_op(self.register[x_reg],
+            self.register[z_reg] = self._sub(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 20 == 0x530:
             #"""CMPI RX, HHLL"""
-            if op_code & 0xF00000:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x5300
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
 
-            self.sub_op(self.register[x_reg], self.mem[addr])
+            self._sub(self.register[x_reg], self.mem[addr])
         elif op_code >> 24 == 0x54:
             #"""CMP RX, RY"""
-            if op_code - ((op_code >> 16) << 16):
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             y_reg = (op_code >> 20) - 0x540
             x_reg = (op_code >> 16) - 0x5400 - (y_reg << 4)
 
-            self.sub_op(self.register[x_reg], self.register[y_reg])
+            self._sub(self.register[x_reg], self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
 
@@ -323,54 +318,49 @@ class VM(object):
         """Bitwise and"""
         if op_code >> 20 == 0x600:
             #"""ANDI RX, HHLL"""
-            if op_code & 0xF00000:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x6000
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
 
-            value = self.and_op(self.register[x_reg], self.mem[addr])
+            value = self._and(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x61:
             #"""AND RX, RY"""
-            if op_code - ((op_code >> 16) << 16):
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             y_reg = (op_code >> 20) - 0x610
             x_reg = (op_code >> 16) - 0x6100 - (y_reg << 4)
 
-            self.register[x_reg] = self.and_op(self.register[x_reg],
+            self.register[x_reg] = self._and(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 24 == 0x62:
             #"""AND RX, RY, RZ"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             y_reg = (op_code >> 20) - 0x620
             x_reg = (op_code >> 16) - 0x6200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
-            self.register[z_reg] = self.and_op(self.register[x_reg],
+            self.register[z_reg] = self._and(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 20 == 0x630:
             #"""TSTI RX, HHLL"""
-            if op_code & 0xF00000:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x6300
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
 
-            self.and_op(self.register[x_reg], self.mem[addr])
+            self._and(self.register[x_reg], self.mem[addr])
         elif op_code >> 24 == 0x64:
             #"""TST RX, RY"""
-            if op_code - ((op_code >> 16) << 16):
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             y_reg = (op_code >> 20) - 0x640
             x_reg = (op_code >> 16) - 0x6400 - (y_reg << 4)
 
-            self.and_op(self.register[x_reg], self.register[y_reg])
+            self._and(self.register[x_reg], self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
 
@@ -378,34 +368,31 @@ class VM(object):
         """Bitwise or"""
         if op_code >> 20 == 0x700:
             #"""ORI RX, HHLL"""
-            if op_code & 0xF00000:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x7000
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
 
-            value = self.or_op(self.register[x_reg], self.mem[addr])
+            value = self._or(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x71:
             #"""OR RX, RY"""
-            if op_code - ((op_code >> 16) << 16):
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             y_reg = (op_code >> 20) - 0x710
             x_reg = (op_code >> 16) - 0x7100 - (y_reg << 4)
 
-            self.register[x_reg] = self.or_op(self.register[x_reg],
+            self.register[x_reg] = self._or(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 24 == 0x72:
             #"""OR RX, RY, RZ"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             y_reg = (op_code >> 20) - 0x720
             x_reg = (op_code >> 16) - 0x7200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
-            self.register[z_reg] = self.or_op(self.register[x_reg],
+            self.register[z_reg] = self._or(self.register[x_reg],
                     self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
@@ -414,34 +401,31 @@ class VM(object):
         """Bitwise xor"""
         if op_code >> 20 == 0x800:
             #"""XORI RX, HHLL"""
-            if op_code & 0xF00000:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x8000
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
 
-            value = self.xor_op(self.register[x_reg], self.mem[addr])
+            value = self._xor(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x81:
             #"""XOR RX, RY"""
-            if op_code - ((op_code >> 16) << 16):
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             y_reg = (op_code >> 20) - 0x810
             x_reg = (op_code >> 16) - 0x8100 - (y_reg << 4)
 
-            self.register[x_reg] = self.xor_op(self.register[x_reg],
+            self.register[x_reg] = self._xor(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 24 == 0x82:
             #"""XOR RX, RY, RZ"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             y_reg = (op_code >> 20) - 0x820
             x_reg = (op_code >> 16) - 0x8200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
-            self.register[z_reg] = self.xor_op(self.register[x_reg],
+            self.register[z_reg] = self._xor(self.register[x_reg],
                     self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
@@ -450,34 +434,31 @@ class VM(object):
         """Multiplication"""
         if op_code >> 20 == 0x900:
             #"""MULI RX, HHLL"""
-            if op_code & 0xF00000:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x9000
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
 
-            value = self.mul_op(self.register[x_reg], self.mem[addr])
+            value = self._mul(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
         elif op_code >> 24 == 0x91:
             #"""MUL RX, RY"""
-            if op_code - ((op_code >> 16) << 16):
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             y_reg = (op_code >> 20) - 0x910
             x_reg = (op_code >> 16) - 0x9100 - (y_reg << 4)
 
-            self.register[x_reg] = self.mul_op(self.register[x_reg],
+            self.register[x_reg] = self._mul(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 24 == 0x92:
             #"""MUL RX, RY, RZ"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             y_reg = (op_code >> 20) - 0x920
             x_reg = (op_code >> 16) - 0x9200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
-            self.register[z_reg] = self.mul_op(self.register[x_reg],
+            self.register[z_reg] = self._mul(self.register[x_reg],
                     self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
@@ -486,34 +467,31 @@ class VM(object):
         """Division"""
         if op_code >> 20 == 0xA00:
             #"""DIVI RX, HHLL"""
-            if op_code & 0xF00000:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0xA000
             hh_addr = op_code - ((op_code >> 8) << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             addr = (hh_addr << 8) + ll_addr
 
-            value = self.div_op(self.register[x_reg], self.mem[addr])
+            value = self._div(self.register[x_reg], self.mem[addr])
             self.register[x_reg] = value
         elif op_code >> 24 == 0xA1:
             #"""DIV RX, RY"""
-            if op_code - ((op_code >> 16) << 16):
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             y_reg = (op_code >> 20) - 0xA10
             x_reg = (op_code >> 16) - 0xA100 - (y_reg << 4)
 
-            self.register[x_reg] = self.div_op(self.register[x_reg],
+            self.register[x_reg] = self._div(self.register[x_reg],
                     self.register[y_reg])
         elif op_code >> 24 == 0xA2:
             #"""DIV RX, RY, RZ"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             y_reg = (op_code >> 20) - 0xA20
             x_reg = (op_code >> 16) - 0xA200 - (y_reg << 4)
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
-            self.register[z_reg] = self.div_op(self.register[x_reg],
+            self.register[z_reg] = self._div(self.register[x_reg],
                     self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
@@ -522,8 +500,7 @@ class VM(object):
         """Bitwise/Arithmetic shifts"""
         if op_code >> 20 == 0xB00:
             #"""SHL RX, N"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             x_reg = (op_code & 0xF0000) >> 16
             n_bits = (op_code & 0xF00) >> 8
 
@@ -532,8 +509,7 @@ class VM(object):
             self.register[x_reg] = self.flag_set(value & 0xFFFF)
         elif op_code >> 20 == 0xB10:
             #"""SHR RX, N"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             x_reg = (op_code & 0xF0000) >> 16
             n_bits = (op_code & 0xF00) >> 8
 
@@ -542,8 +518,7 @@ class VM(object):
             self.register[x_reg] = self.flag_set(value & 0xFFFF)
         elif op_code >> 20 == 0xB20:
             #"""SAR RX, N"""
-            if op_code & 0xF0FF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xF0FF)
             x_reg = (op_code & 0xF0000) >> 16
             n_bits = (op_code & 0xF00) >> 8
             lead_bit = self.register[x_reg] & 0x8000
@@ -553,8 +528,7 @@ class VM(object):
             self.register[x_reg] = self.flag_set(value & 0xFFFF)
         elif op_code >> 24 == 0xB3:
             #"""SHL RX, RY"""
-            if op_code & 0xFFFF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             x_reg = (op_code & 0xF0000) >> 16
             y_reg = (op_code & 0xF00000) >> 20
 
@@ -563,8 +537,7 @@ class VM(object):
             self.register[x_reg] = self.flag_set(value & 0xFFFF)
         elif op_code >> 24 == 0xB4:
             #"""SHR RX, RY"""
-            if op_code & 0xFFFF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             x_reg = (op_code & 0xF0000) >> 16
             y_reg = (op_code & 0xF00000) >> 20
 
@@ -573,8 +546,7 @@ class VM(object):
             self.register[x_reg] = self.flag_set(value & 0xFFFF)
         elif op_code >> 24 == 0xB5:
             #"""SAR RX, RY"""
-            if op_code & 0xFFFF:
-                raise ValueError("Invalid op code")
+            mask_code(op_code, 0xFFFF)
             x_reg = (op_code & 0xF0000) >> 16
             y_reg = (op_code & 0xF00000) >> 20
             lead_bit = self.register[x_reg] & 0x8000
@@ -582,5 +554,54 @@ class VM(object):
             value = self.register[x_reg] >> self.register[y_reg] | lead_bit
 
             self.register[x_reg] = self.flag_set(value & 0xFFFF)
+        else:
+            raise ValueError("Invalid opcode")
+
+    def stack(self, op_code):
+        """Stack push/pop instructions"""
+        if op_code >> 20 == 0xC00:
+            #"""PUSH RX"""
+            mask_code(op_code, 0xFFFF)
+            x_reg = (op_code & 0xF0000) >> 16
+
+            self.mem[self.stack_pointer] = self.register[x_reg]
+            self.stack_pointer += 2
+        elif op_code >> 20 == 0xC10:
+            #"""POP RX"""
+            mask_code(op_code, 0xFFFF)
+            x_reg = (op_code & 0xF0000) >> 16
+
+            self.register[x_reg] = self.mem[self.stack_pointer]
+            self.stack_pointer -= 2
+        elif op_code >> 24 == 0xC2:
+            #"""PUSHALL"""
+            mask_code(op_code, 0xFFFFFF)
+
+            for i, register in enumerate(self.register):
+                self.mem[self.stack_pointer + 2 * i] = register & 0x00FF
+                self.mem[self.stack_pointer + 2 * i + 1] = register >> 8
+
+            self.stack_pointer += 32
+        elif op_code >> 24 == 0xC3:
+            #"""POPALL"""
+            mask_code(op_code, 0xFFFFFF)
+
+            self.stack_pointer -= 32
+            for i in range(16):
+                high = self.mem[self.stack_pointer + 2 * i]
+                low = self.mem[self.stack_pointer + 2 * i + 1]
+                self.register[i] = (high << 8) + low
+        elif op_code >> 20 == 0xC40:
+            #"""PUSHF"""
+            mask_code(op_code, 0xFFFFFF)
+
+            self.mem[self.stack_pointer] = self.flags
+            self.stack_pointer += 2
+        elif op_code >> 20 == 0xC50:
+            #"""POPF"""
+            mask_code(op_code, 0xFFFFFF)
+
+            self.stack_pointer -= 2
+            self.flags = self.mem[self.stack_pointer]
         else:
             raise ValueError("Invalid opcode")

@@ -82,7 +82,7 @@ class TestStoreCodes(TestVM):
 class TestAddition(TestVM):
     def test_add_op_zero(self):
         self.vmac.flags |= OVERFLOW | CARRY | NEGATIVE
-        value = self.vmac.add_op(0xFFF9, 0x07)
+        value = self.vmac._add(0xFFF9, 0x07)
         self.assertEqual(value, 0x0)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
@@ -90,7 +90,7 @@ class TestAddition(TestVM):
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_add_op_pos(self):
         self.vmac.flags |= OVERFLOW | CARRY | ZERO | NEGATIVE
-        value = self.vmac.add_op(0x23, 0x07)
+        value = self.vmac._add(0x23, 0x07)
         self.assertEqual(value, 0x2a)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -98,7 +98,7 @@ class TestAddition(TestVM):
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_add_op_pos_overflow(self):
         self.vmac.flags |= CARRY | ZERO
-        value = self.vmac.add_op(0x7FFF, 0x0001)
+        value = self.vmac._add(0x7FFF, 0x0001)
         self.assertEqual(value, 0x8000)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -106,7 +106,7 @@ class TestAddition(TestVM):
         self.assertTrue(self.vmac.flags & NEGATIVE)
     def test_add_op_neg(self):
         self.vmac.flags |= OVERFLOW | ZERO
-        value = self.vmac.add_op(0xFFFF, 0xFFFF)
+        value = self.vmac._add(0xFFFF, 0xFFFF)
         self.assertEqual(value, 0xFFFE)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
@@ -114,7 +114,7 @@ class TestAddition(TestVM):
         self.assertTrue(self.vmac.flags & NEGATIVE)
     def test_add_op_neg_overflow(self):
         self.vmac.flags |= ZERO | NEGATIVE
-        value = self.vmac.add_op(0xFFFF, 0x8000)
+        value = self.vmac._add(0xFFFF, 0x8000)
         self.assertEqual(value, 0x7FFF)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
@@ -122,7 +122,7 @@ class TestAddition(TestVM):
         self.assertFalse(self.vmac.flags & NEGATIVE)
 
 class TestAdditionCodes(TestVM):
-    def test_ADDI_RX_HHLL_instructions(self):
+    def test_ADDI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 0x23
         self.vmac.mem[0x2345] = 0x07
         self.vmac.execute(0x40014523)
@@ -149,7 +149,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_zero_zero_zero(self):
         # Subtract 0 from 0
         self.vmac.flags |= OVERFLOW | CARRY | NEGATIVE
-        value = self.vmac.sub_op(0,0)
+        value = self.vmac._sub(0,0)
         self.assertEqual(value, 0)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -158,7 +158,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_pos_pos_zero(self):
         # Subtract 7 from 7
         self.vmac.flags |= OVERFLOW | CARRY | NEGATIVE
-        value = self.vmac.sub_op(7,7)
+        value = self.vmac._sub(7,7)
         self.assertEqual(value, 0x0)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -167,7 +167,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_pos_zero_pos(self):
         # Subtract 0 from 7
         self.vmac.flags |= OVERFLOW | CARRY | ZERO | NEGATIVE
-        value = self.vmac.sub_op(7,0)
+        value = self.vmac._sub(7,0)
         self.assertEqual(value, 7)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -176,7 +176,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_pos_pos_pos(self):
         # Subtract 7 from 49
         self.vmac.flags |= OVERFLOW | CARRY | ZERO | NEGATIVE
-        value = self.vmac.sub_op(49, 7)
+        value = self.vmac._sub(49, 7)
         self.assertEqual(value, 42)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -185,7 +185,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_pos_pos_neg(self):
         # Subtract 49 from 7
         self.vmac.flags |= OVERFLOW | ZERO
-        value = self.vmac.sub_op(7, 49)
+        value = self.vmac._sub(7, 49)
         self.assertEqual(value, utils.to_hex(-42) )
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
@@ -194,7 +194,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_neg_pos_pos_underflow(self):
         # Subtract POS_MAX from -2
         self.vmac.flags |= CARRY | ZERO | NEGATIVE
-        value = self.vmac.sub_op(utils.to_hex(-2), 0x7FFF)
+        value = self.vmac._sub(utils.to_hex(-2), 0x7FFF)
         self.assertEqual(value, 0x7FFF)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -203,7 +203,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_pos_neg_neg_overflow(self):
         # Subtract -2 from POS_MAX
         self.vmac.flags |= ZERO
-        value = self.vmac.sub_op(0x7FFF, utils.to_hex(-2) )
+        value = self.vmac._sub(0x7FFF, utils.to_hex(-2) )
         self.assertEqual(value, 0x8001)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
@@ -212,7 +212,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_neg_pos_pos_overflow(self):
         # Subtract 1 from NEG_MIN
         self.vmac.flags |= ZERO | NEGATIVE
-        value = self.vmac.sub_op(0x8000, 0x1)
+        value = self.vmac._sub(0x8000, 0x1)
         self.assertEqual(value, 0x7FFF)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -221,7 +221,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_pos_neg_pos_underflow(self):
         # Subtract 1 from NEG_MIN
         self.vmac.flags |= ZERO | NEGATIVE
-        value = self.vmac.sub_op(0x1, 0x8000)
+        value = self.vmac._sub(0x1, 0x8000)
         self.assertEqual(value, 0x8001)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
@@ -229,7 +229,7 @@ class TestSubtraction(TestVM):
         self.assertTrue(self.vmac.flags & NEGATIVE)
 
 class TestSubtractionCodes(TestVM):
-    def test_SUBI_RX_HHLL_instructions(self):
+    def test_SUBI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 49
         self.vmac.mem[0x2345] = 7
         self.vmac.execute(0x50014523)
@@ -249,7 +249,7 @@ class TestSubtractionCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x52001000)
         self.assertRaises(ValueError, self.vmac.execute, 0x52000023)
         self.assertRaises(ValueError, self.vmac.execute, 0x52001023)
-    def test_CMPI_RX_HHLL_instructions(self):
+    def test_CMPI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 7
         self.vmac.mem[0x2345] = 49
         self.vmac.execute(0x53014523)
@@ -261,7 +261,7 @@ class TestSubtractionCodes(TestVM):
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
         self.assertRaises(ValueError, self.vmac.execute, 0x53100000)
-    def test_CMP_RX_RY_instructions(self):
+    def test_CMP_RX_RY_instruction(self):
         self.vmac.register[0x1] = 7
         self.vmac.register[0x2] = 49
         self.vmac.execute(0x54210000)
@@ -278,23 +278,23 @@ class TestSubtractionCodes(TestVM):
 
 class TestBitwiseAnd(TestVM):
     def test_and_zero_zero_zero(self):
-        value = self.vmac.and_op(0, 0)
+        value = self.vmac._and(0, 0)
         self.assertEqual(value, 0)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_and_pos_pos_pos(self):
-        value = self.vmac.and_op(0x6666, 0x3333)
+        value = self.vmac._and(0x6666, 0x3333)
         self.assertEqual(value, 0x2222)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_and_neg_neg_neg(self):
-        value = self.vmac.and_op(0xAAAA, 0xCCCC)
+        value = self.vmac._and(0xAAAA, 0xCCCC)
         self.assertEqual(value, 0x8888)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
 
 class TestBitwiseAndCodes(TestVM):
-    def test_ANDI_RX_HHLL_instructions(self):
+    def test_ANDI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 0x6666
         self.vmac.mem[0x2345] = 0x3333
         self.vmac.execute(0x60014523)
@@ -314,7 +314,7 @@ class TestBitwiseAndCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x62001000)
         self.assertRaises(ValueError, self.vmac.execute, 0x62000023)
         self.assertRaises(ValueError, self.vmac.execute, 0x62001023)
-    def test_TSTI_RX_HHLL_instructions(self):
+    def test_TSTI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 0xAAAA
         self.vmac.mem[0x2345] = 0xCCCC
         self.vmac.execute(0x63014523)
@@ -326,7 +326,7 @@ class TestBitwiseAndCodes(TestVM):
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
         self.assertRaises(ValueError, self.vmac.execute, 0x63100000)
-    def test_TST_RX_RY_instructions(self):
+    def test_TST_RX_RY_instruction(self):
         self.vmac.register[0x1] = 0xAAAA
         self.vmac.register[0x2] = 0xCCCC
         self.vmac.execute(0x64210000)
@@ -343,23 +343,23 @@ class TestBitwiseAndCodes(TestVM):
 
 class TestBitwiseOr(TestVM):
     def test_or_zero_zero_zero(self):
-        value = self.vmac.or_op(0, 0)
+        value = self.vmac._or(0, 0)
         self.assertEqual(value, 0)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_or_pos_pos_pos(self):
-        value = self.vmac.or_op(0x6666, 0x3333)
+        value = self.vmac._or(0x6666, 0x3333)
         self.assertEqual(value, 0x7777)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_or_neg_neg_neg(self):
-        value = self.vmac.or_op(0xAAAA, 0xCCCC)
+        value = self.vmac._or(0xAAAA, 0xCCCC)
         self.assertEqual(value, 0xEEEE)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
 
 class TestBitwiseOrCodes(TestVM):
-    def test_ORI_RX_HHLL_instructions(self):
+    def test_ORI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 0x6666
         self.vmac.mem[0x2345] = 0x3333
         self.vmac.execute(0x70014523)
@@ -384,28 +384,28 @@ class TestBitwiseOrCodes(TestVM):
 
 class TestBitwiseXor(TestVM):
     def test_xor_zero_zero_zero(self):
-        value = self.vmac.xor_op(0, 0)
+        value = self.vmac._xor(0, 0)
         self.assertEqual(value, 0)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_xor_pos_pos_pos(self):
-        value = self.vmac.xor_op(0x6666, 0x3333)
+        value = self.vmac._xor(0x6666, 0x3333)
         self.assertEqual(value, 0x5555)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_xor_neg_pos_neg(self):
-        value = self.vmac.xor_op(0xAAAA, 0x6666)
+        value = self.vmac._xor(0xAAAA, 0x6666)
         self.assertEqual(value, 0xCCCC)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
     def test_xor_neg_neg_pos(self):
-        value = self.vmac.xor_op(0xAAAA, 0xCCCC)
+        value = self.vmac._xor(0xAAAA, 0xCCCC)
         self.assertEqual(value, 0x6666)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
 
 class TestBitwiseXorCodes(TestVM):
-    def test_XORI_RX_HHLL_instructions(self):
+    def test_XORI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 0x6666
         self.vmac.mem[0x2345] = 0x3333
         self.vmac.execute(0x80014523)
@@ -431,42 +431,42 @@ class TestBitwiseXorCodes(TestVM):
 class TestMultiplication(TestVM):
     def test_mul_op_zero(self):
         self.vmac.flags |= CARRY | NEGATIVE
-        value = self.vmac.mul_op(0x0, 0x7)
+        value = self.vmac._mul(0x0, 0x7)
         self.assertEqual(value, 0x0)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_mul_op_pos(self):
         self.vmac.flags |= CARRY | ZERO | NEGATIVE
-        value = self.vmac.mul_op(3, 14)
+        value = self.vmac._mul(3, 14)
         self.assertEqual(value, 0x2a)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_mul_op_pos_overflow(self):
         self.vmac.flags |= CARRY | ZERO
-        value = self.vmac.mul_op(0x7FFF, 0x7FFF)
+        value = self.vmac._mul(0x7FFF, 0x7FFF)
         self.assertEqual(value, 1)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_mul_op_neg(self):
         self.vmac.flags |= ZERO
-        value = self.vmac.mul_op(0xFFFF, 0xFFFF)
+        value = self.vmac._mul(0xFFFF, 0xFFFF)
         self.assertEqual(value, 1)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_mul_op_neg_overflow(self):
         self.vmac.flags |= ZERO | NEGATIVE
-        value = self.vmac.mul_op(0x8FFF, 0x8000)
+        value = self.vmac._mul(0x8FFF, 0x8000)
         self.assertEqual(value, 0x8000)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
 
 class TestMultiplicationCodes(TestVM):
-    def test_MULI_RX_HHLL_instructions(self):
+    def test_MULI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 3
         self.vmac.mem[0x2345] = 14
         self.vmac.execute(0x90014523)
@@ -492,42 +492,42 @@ class TestMultiplicationCodes(TestVM):
 class TestDivision(TestVM):
     def test_div_op_zero(self):
         self.vmac.flags |= CARRY | NEGATIVE
-        value = self.vmac.div_op(0x0, 0x7)
+        value = self.vmac._div(0x0, 0x7)
         self.assertEqual(value, 0x0)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_div_op_pos(self):
         self.vmac.flags |= CARRY | ZERO | NEGATIVE
-        value = self.vmac.div_op(84, 2)
+        value = self.vmac._div(84, 2)
         self.assertEqual(value, 0x2a)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_div_op_pos_overflow(self):
         self.vmac.flags |= ZERO | NEGATIVE
-        value = self.vmac.div_op(85, 2)
+        value = self.vmac._div(85, 2)
         self.assertEqual(value, 42)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_div_op_neg(self):
         self.vmac.flags |= CARRY | ZERO
-        value = self.vmac.div_op(4, 0xFFFE)
+        value = self.vmac._div(4, 0xFFFE)
         self.assertEqual(value, 0xFFFE)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
     def test_div_op_neg_overflow(self):
         self.vmac.flags |= ZERO
-        value = self.vmac.div_op(5, 0xFFFE)
+        value = self.vmac._div(5, 0xFFFE)
         self.assertEqual(value, 0xFFFD)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
 
 class TestDivisionCodes(TestVM):
-    def test_DIVI_RX_HHLL_instructions(self):
+    def test_DIVI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 84
         self.vmac.mem[0x2345] = 2
         self.vmac.execute(0xA0014523)
@@ -551,7 +551,7 @@ class TestDivisionCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0xA3000000)
 
 class TestShiftCodes(TestVM):
-    def test_SHL_RX_N_instructions(self):
+    def test_SHL_RX_N_instruction(self):
         self.vmac.flags |= ZERO | NEGATIVE
         self.vmac.register[0x1] = 0xAAAA
         self.vmac.execute(0xB0010100)
@@ -559,7 +559,7 @@ class TestShiftCodes(TestVM):
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
         self.assertRaises(ValueError, self.vmac.execute, 0xB0001023)
-    def test_SHR_RX_N_instructions(self):
+    def test_SHR_RX_N_instruction(self):
         self.vmac.flags |= ZERO | NEGATIVE
         self.vmac.register[0x1] = 0xAAAA
         self.vmac.execute(0xB1010100)
@@ -567,7 +567,7 @@ class TestShiftCodes(TestVM):
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
         self.assertRaises(ValueError, self.vmac.execute, 0xB1001023)
-    def test_SAR_RX_N_instructions(self):
+    def test_SAR_RX_N_instruction(self):
         self.vmac.flags |= ZERO | NEGATIVE
         self.vmac.register[0x1] = 0xAAAA
         self.vmac.execute(0xB2010100)
@@ -575,7 +575,7 @@ class TestShiftCodes(TestVM):
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
         self.assertRaises(ValueError, self.vmac.execute, 0xB2001023)
-    def test_SHL_RX_RY_instructions(self):
+    def test_SHL_RX_RY_instruction(self):
         self.vmac.flags |= ZERO | NEGATIVE
         self.vmac.register[0x1] = 0xAAAA
         self.vmac.register[0x2] = 1
@@ -584,7 +584,7 @@ class TestShiftCodes(TestVM):
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
         self.assertRaises(ValueError, self.vmac.execute, 0xB3001234)
-    def test_SHR_RX_RY_instructions(self):
+    def test_SHR_RX_RY_instruction(self):
         self.vmac.flags |= ZERO | NEGATIVE
         self.vmac.register[0x1] = 0xAAAA
         self.vmac.register[0x2] = 1
@@ -593,7 +593,7 @@ class TestShiftCodes(TestVM):
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
         self.assertRaises(ValueError, self.vmac.execute, 0xB4001023)
-    def test_SAR_RX_RY_instructions(self):
+    def test_SAR_RX_RY_instruction(self):
         self.vmac.flags |= ZERO | NEGATIVE
         self.vmac.register[0x1] = 0xAAAA
         self.vmac.register[0x2] = 1
@@ -602,3 +602,57 @@ class TestShiftCodes(TestVM):
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
         self.assertRaises(ValueError, self.vmac.execute, 0xB5001023)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0xB6000000)
+
+class TestStackCodes(TestVM):
+    def test_PUSH_RX_instruction(self):
+        self.vmac.register[0x1] = 0xAAAA
+        self.vmac.execute(0xC0010000)
+        self.assertEqual(self.vmac.mem[0xFDF0], 0xAAAA)
+        self.assertEqual(self.vmac.stack_pointer, 0xFDF2)
+        self.assertRaises(ValueError, self.vmac.execute, 0xC0001234)
+    def test_POP_RX_instruction(self):
+        self.vmac.stack_pointer = 0xFDF2
+        self.vmac.mem[0xFDF2] = 0xAAAA
+        self.vmac.execute(0xC1010000)
+        self.assertEqual(self.vmac.register[1], 0xAAAA)
+        self.assertEqual(self.vmac.stack_pointer, 0xFDF0)
+        self.assertRaises(ValueError, self.vmac.execute, 0xC1001234)
+    def test_PUSHALL_instruction(self):
+        for i in range(16):
+            self.vmac.register[i] = (i << 12) + (i << 8) + (i << 4) + i
+        self.vmac.execute(0xC2000000)
+        for i in range(16):
+            value = (i << 4) + i
+            self.assertEqual(self.vmac.mem[0xFDF0 + 2 * i], value)
+            self.assertEqual(self.vmac.mem[0xFDF0 + 2 * i + 1], value)
+        self.assertEqual(self.vmac.stack_pointer, 0xFE10)
+        self.assertRaises(ValueError, self.vmac.execute, 0xC2123456)
+    def test_POPALL_instruction(self):
+        self.vmac.stack_pointer = 0xFDF0 + 32
+        for i in range(16):
+            value = (i << 4) + i
+            self.vmac.mem[0xFDF0 + 2 * i] = value
+            self.vmac.mem[0xFDF0 + 2 * i + 1] = value
+        self.vmac.execute(0xC3000000)
+        self.assertEqual(self.vmac.stack_pointer, 0xFDF0)
+        for i in range(16):
+            value = (i << 12) + (i << 8) + (i << 4) + i
+            self.assertEqual(self.vmac.register[i], value)
+        self.assertRaises(ValueError, self.vmac.execute, 0xC3123456)
+    def test_PUSHF_instruction(self):
+        self.vmac.flags = 0xAAAA
+        self.vmac.execute(0xC4000000)
+        self.assertEqual(self.vmac.mem[self.vmac.stack_pointer -2], 0xAAAA)
+        self.assertEqual(self.vmac.stack_pointer, 0xFDF2)
+        self.assertRaises(ValueError, self.vmac.execute, 0xC4123456)
+    def test_POPF_instruction(self):
+        self.vmac.stack_pointer = 0xFDF2
+        self.vmac.mem[0xFDF0] = 0xAAAA
+        self.vmac.execute(0xC5000000)
+        self.assertEqual(self.vmac.flags, 0xAAAA)
+        self.assertEqual(self.vmac.stack_pointer, 0xFDF0)
+        self.assertRaises(ValueError, self.vmac.execute, 0xC5123456)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0xC6000000)
