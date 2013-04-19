@@ -46,6 +46,9 @@ class VM(object):
         elif op_code >> 28 == 0x6:
             self.bit_and(op_code)
 
+        elif op_code >> 28 == 0x7:
+            self.bit_or(op_code)
+
     def jump(self, op_code):
         """Jumps"""
         if op_code >> 16 == 0x1000:
@@ -179,6 +182,11 @@ class VM(object):
     def and_op(self, left, right):
         """Bitwise and operation"""
         value = left & right
+        return self.flag_set(value)
+
+    def or_op(self, left, right):
+        """Bitwise and operation"""
+        value = left | right
         return self.flag_set(value)
 
     def add(self, op_code):
@@ -324,5 +332,41 @@ class VM(object):
             x_reg = (op_code >> 16) - 0x6400 - (y_reg << 4)
 
             self.and_op(self.register[x_reg], self.register[y_reg])
+        else:
+            raise ValueError("Invalid op code")
+
+    def bit_or(self, op_code):
+        """Bitwise or"""
+        if op_code >> 20 == 0x700:
+            #"""ORI RX, HHLL"""
+            if op_code & 0xF00000:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code >> 16) - 0x7000
+            hh_addr = op_code - ((op_code >> 8) << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+
+            value = self.or_op(self.register[x_reg], self.mem[addr])
+            self.register[x_reg] = value
+        elif op_code >> 24 == 0x71:
+            #"""OR RX, RY"""
+            if op_code - ((op_code >> 16) << 16):
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x710
+            x_reg = (op_code >> 16) - 0x7100 - (y_reg << 4)
+
+            self.register[x_reg] = self.or_op(self.register[x_reg],
+                    self.register[y_reg])
+        elif op_code >> 24 == 0x72:
+            #"""OR RX, RY, RZ"""
+            if op_code & 0xF0FF:
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x720
+            x_reg = (op_code >> 16) - 0x7200 - (y_reg << 4)
+            z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
+
+            self.register[z_reg] = self.or_op(self.register[x_reg],
+                    self.register[y_reg])
         else:
             raise ValueError("Invalid op code")

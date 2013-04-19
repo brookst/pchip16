@@ -340,3 +340,44 @@ class TestBitwiseAndCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x64001234)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x65000000)
+
+class TestBitwiseOr(TestVM):
+    def test_and_zero_zero_zero(self):
+        value = self.vmac.or_op(0, 0)
+        self.assertEqual(value, 0)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_and_pos_pos_pos(self):
+        value = self.vmac.or_op(0x6666, 0x3333)
+        self.assertEqual(value, 0x7777)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_and_neg_neg_neg(self):
+        value = self.vmac.or_op(0xAAAA, 0xCCCC)
+        self.assertEqual(value, 0xEEEE)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
+
+class TestBitwiseOrCodes(TestVM):
+    def test_ORI_RX_HHLL_instructions(self):
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.mem[0x2345] = 0x3333
+        self.vmac.execute(0x70014523)
+        self.assertEqual(self.vmac.register[0x1], 0x7777)
+        self.assertRaises(ValueError, self.vmac.execute, 0x70100000)
+    def test_OR_RX_RY_instruction(self):
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.register[0x2] = 0x3333
+        self.vmac.execute(0x71210000)
+        self.assertEqual(self.vmac.register[0x1], 0x7777)
+        self.assertRaises(ValueError, self.vmac.execute, 0x71001234)
+    def test_OR_RX_RY_RZ_instruction(self):
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.register[0x2] = 0x3333
+        self.vmac.execute(0x72210300)
+        self.assertEqual(self.vmac.register[0x3], 0x7777)
+        self.assertRaises(ValueError, self.vmac.execute, 0x72001000)
+        self.assertRaises(ValueError, self.vmac.execute, 0x72000023)
+        self.assertRaises(ValueError, self.vmac.execute, 0x72001023)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0x73000000)
