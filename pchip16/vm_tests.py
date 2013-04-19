@@ -525,3 +525,27 @@ class TestDivision(TestVM):
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
+
+class TestDivisionCodes(TestVM):
+    def test_DIVI_RX_HHLL_instructions(self):
+        self.vmac.register[0x1] = 84
+        self.vmac.mem[0x2345] = 2
+        self.vmac.execute(0xA0014523)
+        self.assertEqual(self.vmac.register[0x1], 42)
+        self.assertRaises(ValueError, self.vmac.execute, 0xA0100000)
+    def test_DIV_RX_RY_instruction(self):
+        self.vmac.register[0x1] = 84
+        self.vmac.register[0x2] = 2
+        self.vmac.execute(0xA1210000)
+        self.assertEqual(self.vmac.register[0x1], 42)
+        self.assertRaises(ValueError, self.vmac.execute, 0xA1001234)
+    def test_DIV_RX_RY_RZ_instruction(self):
+        self.vmac.register[0x1] = 84
+        self.vmac.register[0x2] = 2
+        self.vmac.execute(0xA2210300)
+        self.assertEqual(self.vmac.register[0x3], 42)
+        self.assertRaises(ValueError, self.vmac.execute, 0xA2001000)
+        self.assertRaises(ValueError, self.vmac.execute, 0xA2000023)
+        self.assertRaises(ValueError, self.vmac.execute, 0xA2001023)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0xA3000000)

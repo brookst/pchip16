@@ -58,6 +58,9 @@ class VM(object):
         elif op_code >> 28 == 0x9:
             self.mul(op_code)
 
+        elif op_code >> 28 == 0xA:
+            self.div(op_code)
+
         else:
             raise ValueError("Invalid op code")
 
@@ -456,7 +459,7 @@ class VM(object):
             raise ValueError("Invalid op code")
 
     def mul(self, op_code):
-        """Bitwise xor"""
+        """Multiplication"""
         if op_code >> 20 == 0x900:
             #"""MULI RX, HHLL"""
             if op_code & 0xF00000:
@@ -487,6 +490,42 @@ class VM(object):
             z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
 
             self.register[z_reg] = self.mul_op(self.register[x_reg],
+                    self.register[y_reg])
+        else:
+            raise ValueError("Invalid op code")
+
+    def div(self, op_code):
+        """Division"""
+        if op_code >> 20 == 0xA00:
+            #"""DIVI RX, HHLL"""
+            if op_code & 0xF00000:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code >> 16) - 0xA000
+            hh_addr = op_code - ((op_code >> 8) << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+
+            value = self.div_op(self.register[x_reg], self.mem[addr])
+            self.register[x_reg] = value
+        elif op_code >> 24 == 0xA1:
+            #"""DIV RX, RY"""
+            if op_code - ((op_code >> 16) << 16):
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0xA10
+            x_reg = (op_code >> 16) - 0xA100 - (y_reg << 4)
+
+            self.register[x_reg] = self.div_op(self.register[x_reg],
+                    self.register[y_reg])
+        elif op_code >> 24 == 0xA2:
+            #"""DIV RX, RY, RZ"""
+            if op_code & 0xF0FF:
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0xA20
+            x_reg = (op_code >> 16) - 0xA200 - (y_reg << 4)
+            z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
+
+            self.register[z_reg] = self.div_op(self.register[x_reg],
                     self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
