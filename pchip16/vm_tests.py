@@ -261,7 +261,7 @@ class TestSubtractionCodes(TestVM):
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
         self.assertRaises(ValueError, self.vmac.execute, 0x53100000)
-    def test_CMPI_RX_RY_instructions(self):
+    def test_CMP_RX_RY_instructions(self):
         self.vmac.register[0x1] = 7
         self.vmac.register[0x2] = 49
         self.vmac.execute(0x54210000)
@@ -292,3 +292,51 @@ class TestBitwiseAnd(TestVM):
         self.assertEqual(value, 0x8888)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
+
+class TestBitwiseAndCodes(TestVM):
+    def test_ANDI_RX_HHLL_instructions(self):
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.mem[0x2345] = 0x3333
+        self.vmac.execute(0x60014523)
+        self.assertEqual(self.vmac.register[0x1], 0x2222)
+        self.assertRaises(ValueError, self.vmac.execute, 0x60100000)
+    def test_AND_RX_RY_instruction(self):
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.register[0x2] = 0x3333
+        self.vmac.execute(0x61210000)
+        self.assertEqual(self.vmac.register[0x1], 0x2222)
+        self.assertRaises(ValueError, self.vmac.execute, 0x61001234)
+    def test_AND_RX_RY_RZ_instruction(self):
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.register[0x2] = 0x3333
+        self.vmac.execute(0x62210300)
+        self.assertEqual(self.vmac.register[0x3], 0x2222)
+        self.assertRaises(ValueError, self.vmac.execute, 0x62001000)
+        self.assertRaises(ValueError, self.vmac.execute, 0x62000023)
+        self.assertRaises(ValueError, self.vmac.execute, 0x62001023)
+    def test_TSTI_RX_HHLL_instructions(self):
+        self.vmac.register[0x1] = 0xAAAA
+        self.vmac.mem[0x2345] = 0xCCCC
+        self.vmac.execute(0x63014523)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.mem[0x2345] = 0x9999
+        self.vmac.execute(0x63014523)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0x63100000)
+    def test_TST_RX_RY_instructions(self):
+        self.vmac.register[0x1] = 0xAAAA
+        self.vmac.register[0x2] = 0xCCCC
+        self.vmac.execute(0x64210000)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
+        self.vmac.register[0x1] = 0x6666
+        self.vmac.register[0x2] = 0x9999
+        self.vmac.execute(0x64210000)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0x64001234)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0x65000000)

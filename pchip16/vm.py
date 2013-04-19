@@ -43,6 +43,9 @@ class VM(object):
         elif op_code >> 28 == 0x5:
             self.sub(op_code)
 
+        elif op_code >> 28 == 0x6:
+            self.bit_and(op_code)
+
     def jump(self, op_code):
         """Jumps"""
         if op_code >> 16 == 0x1000:
@@ -266,5 +269,60 @@ class VM(object):
             x_reg = (op_code >> 16) - 0x5400 - (y_reg << 4)
 
             self.sub_op(self.register[x_reg], self.register[y_reg])
+        else:
+            raise ValueError("Invalid op code")
+
+    def bit_and(self, op_code):
+        """Bitwise and"""
+        if op_code >> 20 == 0x600:
+            #"""ANDI RX, HHLL"""
+            if op_code & 0xF00000:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code >> 16) - 0x6000
+            hh_addr = op_code - ((op_code >> 8) << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+
+            value = self.and_op(self.register[x_reg], self.mem[addr])
+            self.register[x_reg] = value
+        elif op_code >> 24 == 0x61:
+            #"""AND RX, RY"""
+            if op_code - ((op_code >> 16) << 16):
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x610
+            x_reg = (op_code >> 16) - 0x6100 - (y_reg << 4)
+
+            self.register[x_reg] = self.and_op(self.register[x_reg],
+                    self.register[y_reg])
+        elif op_code >> 24 == 0x62:
+            #"""AND RX, RY, RZ"""
+            if op_code & 0xF0FF:
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x620
+            x_reg = (op_code >> 16) - 0x6200 - (y_reg << 4)
+            z_reg = (op_code >> 8) - ((op_code >> 12) << 4)
+
+            self.register[z_reg] = self.and_op(self.register[x_reg],
+                    self.register[y_reg])
+        elif op_code >> 20 == 0x630:
+            #"""TSTI RX, HHLL"""
+            if op_code & 0xF00000:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code >> 16) - 0x6300
+            hh_addr = op_code - ((op_code >> 8) << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+
+            self.and_op(self.register[x_reg], self.mem[addr])
+        elif op_code >> 24 == 0x64:
+            #"""TST RX, RY"""
+            if op_code - ((op_code >> 16) << 16):
+                raise ValueError("Invalid op code")
+            y_reg = (op_code >> 20) - 0x640
+            x_reg = (op_code >> 16) - 0x6400 - (y_reg << 4)
+
+            self.and_op(self.register[x_reg], self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
