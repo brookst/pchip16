@@ -39,9 +39,9 @@ class TestLoadCodes(TestVM):
         self.vmac.mem[0x2345] = 0x1
         self.vmac.execute(0x20014523)
         self.assertEqual(self.vmac.register[0x1], 0x1)
-        self.vmac.mem[0x2345] = 0xFFFF
+        self.vmac.mem[0x2345] = 0xAA55
         self.vmac.execute(0x20014523)
-        self.assertEqual(self.vmac.register[0x1], 0xFFFF)
+        self.assertEqual(self.vmac.register[0x1], 0xAA55)
     def test_LDI_SP_HHLL_instruction(self):
         self.vmac.mem[0x2345] = 0x1
         self.vmac.execute(0x21004523)
@@ -71,10 +71,10 @@ class TestStoreCodes(TestVM):
         self.vmac.execute(0x30014523)
         self.assertEqual(self.vmac.mem[0x2345], 0x1)
     def test_STM_RX_RY_instruction(self):
-        self.vmac.register[0x1] = 0x1
+        self.vmac.register[0x1] = 0xBEEF
         self.vmac.register[0x2] = 0x2
         self.vmac.execute(0x31210000)
-        self.assertEqual(self.vmac.mem[0x2], 0x1)
+        self.assertEqual(self.vmac.mem[0x2], 0xBEEF)
         self.assertRaises(ValueError, self.vmac.execute, 0x31001234)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x32000000)
@@ -123,10 +123,10 @@ class TestAddition(TestVM):
 
 class TestAdditionCodes(TestVM):
     def test_ADDI_RX_HHLL_instruction(self):
-        self.vmac.register[0x1] = 0x23
-        self.vmac.mem[0x2345] = 0x07
+        self.vmac.register[0x1] = 70
+        self.vmac.mem[0x2345] = 350
         self.vmac.execute(0x40014523)
-        self.assertEqual(self.vmac.register[0x1], 0x2a)
+        self.assertEqual(self.vmac.register[0x1], 420)
         self.assertRaises(ValueError, self.vmac.execute, 0x40100000)
     def test_ADD_RX_RY_instruction(self):
         self.vmac.register[0x1] = 0x7
@@ -230,10 +230,10 @@ class TestSubtraction(TestVM):
 
 class TestSubtractionCodes(TestVM):
     def test_SUBI_RX_HHLL_instruction(self):
-        self.vmac.register[0x1] = 49
-        self.vmac.mem[0x2345] = 7
+        self.vmac.register[0x1] = 70
+        self.vmac.mem[0x2345] = 490
         self.vmac.execute(0x50014523)
-        self.assertEqual(self.vmac.register[0x1], 42)
+        self.assertEqual(self.vmac.register[0x1], utils.complement(420) )
         self.assertRaises(ValueError, self.vmac.execute, 0x50100000)
     def test_SUB_RX_RY_instruction(self):
         self.vmac.register[0x1] = 7
@@ -250,13 +250,13 @@ class TestSubtractionCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x52000023)
         self.assertRaises(ValueError, self.vmac.execute, 0x52001023)
     def test_CMPI_RX_HHLL_instruction(self):
-        self.vmac.register[0x1] = 7
-        self.vmac.mem[0x2345] = 49
+        self.vmac.register[0x1] = 70
+        self.vmac.mem[0x2345] = 490
         self.vmac.execute(0x53014523)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
-        self.vmac.register[0x1] = 7
-        self.vmac.mem[0x2345] = 7
+        self.vmac.register[0x1] = 700
+        self.vmac.mem[0x2345] = 700
         self.vmac.execute(0x53014523)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
@@ -468,9 +468,9 @@ class TestMultiplication(TestVM):
 class TestMultiplicationCodes(TestVM):
     def test_MULI_RX_HHLL_instruction(self):
         self.vmac.register[0x1] = 3
-        self.vmac.mem[0x2345] = 14
+        self.vmac.mem[0x2345] = 1400
         self.vmac.execute(0x90014523)
-        self.assertEqual(self.vmac.register[0x1], 42)
+        self.assertEqual(self.vmac.register[0x1], 4200)
         self.assertRaises(ValueError, self.vmac.execute, 0x90100000)
     def test_MUL_RX_RY_instruction(self):
         self.vmac.register[0x1] = 3
