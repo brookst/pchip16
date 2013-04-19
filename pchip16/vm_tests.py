@@ -464,3 +464,27 @@ class TestMultiplication(TestVM):
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
+
+class TestMultiplicationCodes(TestVM):
+    def test_MULI_RX_HHLL_instructions(self):
+        self.vmac.register[0x1] = 3
+        self.vmac.mem[0x2345] = 14
+        self.vmac.execute(0x90014523)
+        self.assertEqual(self.vmac.register[0x1], 42)
+        self.assertRaises(ValueError, self.vmac.execute, 0x90100000)
+    def test_MUL_RX_RY_instruction(self):
+        self.vmac.register[0x1] = 3
+        self.vmac.register[0x2] = 14
+        self.vmac.execute(0x91210000)
+        self.assertEqual(self.vmac.register[0x1], 42)
+        self.assertRaises(ValueError, self.vmac.execute, 0x91001234)
+    def test_MUL_RX_RY_RZ_instruction(self):
+        self.vmac.register[0x1] = 3
+        self.vmac.register[0x2] = 14
+        self.vmac.execute(0x92210300)
+        self.assertEqual(self.vmac.register[0x3], 42)
+        self.assertRaises(ValueError, self.vmac.execute, 0x92001000)
+        self.assertRaises(ValueError, self.vmac.execute, 0x92000023)
+        self.assertRaises(ValueError, self.vmac.execute, 0x92001023)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0x93000000)
