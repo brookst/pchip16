@@ -505,21 +505,21 @@ class TestDivision(TestVM):
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_div_op_pos_overflow(self):
-        self.vmac.flags |= CARRY | ZERO
+        self.vmac.flags |= ZERO | NEGATIVE
         value = self.vmac.div_op(85, 2)
         self.assertEqual(value, 42)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
     def test_div_op_neg(self):
-        self.vmac.flags |= ZERO
+        self.vmac.flags |= CARRY | ZERO
         value = self.vmac.div_op(4, 0xFFFE)
         self.assertEqual(value, 0xFFFE)
         self.assertFalse(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertTrue(self.vmac.flags & NEGATIVE)
     def test_div_op_neg_overflow(self):
-        self.vmac.flags |= ZERO | NEGATIVE
+        self.vmac.flags |= ZERO
         value = self.vmac.div_op(5, 0xFFFE)
         self.assertEqual(value, 0xFFFD)
         self.assertTrue(self.vmac.flags & CARRY)
@@ -549,3 +549,56 @@ class TestDivisionCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0xA2001023)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0xA3000000)
+
+class TestShiftCodes(TestVM):
+    def test_SHL_RX_N_instructions(self):
+        self.vmac.flags |= ZERO | NEGATIVE
+        self.vmac.register[0x1] = 0xAAAA
+        self.vmac.execute(0xB0010100)
+        self.assertEqual(self.vmac.register[0x1], 0x5554)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0xB0001023)
+    def test_SHR_RX_N_instructions(self):
+        self.vmac.flags |= ZERO | NEGATIVE
+        self.vmac.register[0x1] = 0xAAAA
+        self.vmac.execute(0xB1010100)
+        self.assertEqual(self.vmac.register[0x1], 0x5555)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0xB1001023)
+    def test_SAR_RX_N_instructions(self):
+        self.vmac.flags |= ZERO | NEGATIVE
+        self.vmac.register[0x1] = 0xAAAA
+        self.vmac.execute(0xB2010100)
+        self.assertEqual(self.vmac.register[0x1], 0xD555)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0xB2001023)
+    def test_SHL_RX_RY_instructions(self):
+        self.vmac.flags |= ZERO | NEGATIVE
+        self.vmac.register[0x1] = 0xAAAA
+        self.vmac.register[0x2] = 1
+        self.vmac.execute(0xB3210000)
+        self.assertEqual(self.vmac.register[0x1], 0x5554)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0xB3001234)
+    def test_SHR_RX_RY_instructions(self):
+        self.vmac.flags |= ZERO | NEGATIVE
+        self.vmac.register[0x1] = 0xAAAA
+        self.vmac.register[0x2] = 1
+        self.vmac.execute(0xB4210000)
+        self.assertEqual(self.vmac.register[0x1], 0x5555)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0xB4001023)
+    def test_SAR_RX_RY_instructions(self):
+        self.vmac.flags |= ZERO | NEGATIVE
+        self.vmac.register[0x1] = 0xAAAA
+        self.vmac.register[0x2] = 1
+        self.vmac.execute(0xB5210000)
+        self.assertEqual(self.vmac.register[0x1], 0xD555)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
+        self.assertRaises(ValueError, self.vmac.execute, 0xB5001023)

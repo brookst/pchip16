@@ -28,41 +28,29 @@ class VM(object):
 
     def execute(self, op_code):
         """Carry out instruction specified by op_code"""
-        if op_code >> 28 == 0x00000000:
-            pass
+        instructions = [
+            self.nop,
+            self.jump,
+            self.load, 
+            self.store,
+            self.add,
+            self.sub,
+            self.bit_and,
+            self.bit_or,
+            self.bit_xor,
+            self.mul,
+            self.div,
+            self.shift,
+        ]
+        try:
+            instruction = instructions[op_code >> 28]
+            instruction(op_code)
+        except IndexError:
+            raise ValueError("Invalid opcode %i" %(op_code >> 28))
 
-        elif op_code >> 28 == 0x1:
-            self.jump(op_code)
-
-        elif op_code >> 28 == 0x2:
-            self.load(op_code)
-
-        elif op_code >> 28 == 0x3:
-            self.store(op_code)
-
-        elif op_code >> 28 == 0x4:
-            self.add(op_code)
-
-        elif op_code >> 28 == 0x5:
-            self.sub(op_code)
-
-        elif op_code >> 28 == 0x6:
-            self.bit_and(op_code)
-
-        elif op_code >> 28 == 0x7:
-            self.bit_or(op_code)
-
-        elif op_code >> 28 == 0x8:
-            self.bit_xor(op_code)
-
-        elif op_code >> 28 == 0x9:
-            self.mul(op_code)
-
-        elif op_code >> 28 == 0xA:
-            self.div(op_code)
-
-        else:
-            raise ValueError("Invalid op code")
+    def nop(self, op_code):
+        """Do nothig"""
+        pass
 
     def jump(self, op_code):
         """Jumps"""
@@ -529,3 +517,70 @@ class VM(object):
                     self.register[y_reg])
         else:
             raise ValueError("Invalid op code")
+
+    def shift(self, op_code):
+        """Bitwise/Arithmetic shifts"""
+        if op_code >> 20 == 0xB00:
+            #"""SHL RX, N"""
+            if op_code & 0xF0FF:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code & 0xF0000) >> 16
+            n_bits = (op_code & 0xF00) >> 8
+
+            value = self.register[x_reg] << n_bits
+
+            self.register[x_reg] = self.flag_set(value & 0xFFFF)
+        elif op_code >> 20 == 0xB10:
+            #"""SHR RX, N"""
+            if op_code & 0xF0FF:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code & 0xF0000) >> 16
+            n_bits = (op_code & 0xF00) >> 8
+
+            value = self.register[x_reg] >> n_bits
+
+            self.register[x_reg] = self.flag_set(value & 0xFFFF)
+        elif op_code >> 20 == 0xB20:
+            #"""SAR RX, N"""
+            if op_code & 0xF0FF:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code & 0xF0000) >> 16
+            n_bits = (op_code & 0xF00) >> 8
+            lead_bit = self.register[x_reg] & 0x8000
+
+            value = (self.register[x_reg] >> n_bits) | lead_bit
+
+            self.register[x_reg] = self.flag_set(value & 0xFFFF)
+        elif op_code >> 24 == 0xB3:
+            #"""SHL RX, RY"""
+            if op_code & 0xFFFF:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code & 0xF0000) >> 16
+            y_reg = (op_code & 0xF00000) >> 20
+
+            value = self.register[x_reg] << self.register[y_reg]
+
+            self.register[x_reg] = self.flag_set(value & 0xFFFF)
+        elif op_code >> 24 == 0xB4:
+            #"""SHR RX, RY"""
+            if op_code & 0xFFFF:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code & 0xF0000) >> 16
+            y_reg = (op_code & 0xF00000) >> 20
+
+            value = self.register[x_reg] >> self.register[y_reg]
+
+            self.register[x_reg] = self.flag_set(value & 0xFFFF)
+        elif op_code >> 24 == 0xB5:
+            #"""SAR RX, RY"""
+            if op_code & 0xFFFF:
+                raise ValueError("Invalid op code")
+            x_reg = (op_code & 0xF0000) >> 16
+            y_reg = (op_code & 0xF00000) >> 20
+            lead_bit = self.register[x_reg] & 0x8000
+
+            value = self.register[x_reg] >> self.register[y_reg] | lead_bit
+
+            self.register[x_reg] = self.flag_set(value & 0xFFFF)
+        else:
+            raise ValueError("Invalid opcode")
