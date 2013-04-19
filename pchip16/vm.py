@@ -222,6 +222,21 @@ class VM(object):
             self.flags &= ~CARRY
         return self.flag_set(value)
 
+    def div_op(self, left, right):
+        """Division"""
+        import pchip16.utils as utils
+        print(utils.to_dec(left), utils.to_dec(right))
+        left = utils.to_dec(left)
+        right = utils.to_dec(right)
+        value = left // right
+        value = utils.to_hex(value)
+        print(utils.to_dec(left), utils.to_dec(right), utils.to_dec(value))
+        if left % right:
+            self.flags |= CARRY
+        else:
+            self.flags &= ~CARRY
+        return self.flag_set(value)
+
     def add(self, op_code):
         """Addition"""
         if op_code >> 20 == 0x400:

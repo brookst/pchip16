@@ -488,3 +488,40 @@ class TestMultiplicationCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x92001023)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x93000000)
+
+class TestDivision(TestVM):
+    def test_div_op_zero(self):
+        self.vmac.flags |= CARRY | NEGATIVE
+        value = self.vmac.div_op(0x0, 0x7)
+        self.assertEqual(value, 0x0)
+        self.assertFalse(self.vmac.flags & CARRY)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_div_op_pos(self):
+        self.vmac.flags |= CARRY | ZERO | NEGATIVE
+        value = self.vmac.div_op(84, 2)
+        self.assertEqual(value, 0x2a)
+        self.assertFalse(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_div_op_pos_overflow(self):
+        self.vmac.flags |= CARRY | ZERO
+        value = self.vmac.div_op(85, 2)
+        self.assertEqual(value, 42)
+        self.assertTrue(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_div_op_neg(self):
+        self.vmac.flags |= ZERO
+        value = self.vmac.div_op(4, 0xFFFE)
+        self.assertEqual(value, 0xFFFE)
+        self.assertFalse(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
+    def test_div_op_neg_overflow(self):
+        self.vmac.flags |= ZERO | NEGATIVE
+        value = self.vmac.div_op(5, 0xFFFE)
+        self.assertEqual(value, 0xFFFD)
+        self.assertTrue(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
