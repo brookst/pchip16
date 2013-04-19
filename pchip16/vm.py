@@ -197,6 +197,22 @@ class VM(object):
         value = left ^ right
         return self.flag_set(value)
 
+    def mul_op(self, left, right):
+        """16 bit signed multiplication"""
+        if is_neg(right):
+            left = complement(left)
+            right = complement(right)
+        value = left * right
+        if value >= 0x10000:
+            # Remove bit 16
+            value &= 0xFFFF
+            # Set the CARRY flag as bit 16 is set
+            self.flags |= CARRY
+        else:
+            # Clear CARRY bit
+            self.flags &= ~CARRY
+        return self.flag_set(value)
+
     def add(self, op_code):
         """Addition"""
         if op_code >> 20 == 0x400:

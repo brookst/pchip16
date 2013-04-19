@@ -427,3 +427,40 @@ class TestBitwiseXorCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x82001023)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x83000000)
+
+class TestMultiplication(TestVM):
+    def test_mul_op_zero(self):
+        self.vmac.flags |= CARRY | NEGATIVE
+        value = self.vmac.mul_op(0x0, 0x7)
+        self.assertEqual(value, 0x0)
+        self.assertFalse(self.vmac.flags & CARRY)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_mul_op_pos(self):
+        self.vmac.flags |= CARRY | ZERO | NEGATIVE
+        value = self.vmac.mul_op(3, 14)
+        self.assertEqual(value, 0x2a)
+        self.assertFalse(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_mul_op_pos_overflow(self):
+        self.vmac.flags |= CARRY | ZERO
+        value = self.vmac.mul_op(0x7FFF, 0x7FFF)
+        self.assertEqual(value, 1)
+        self.assertTrue(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_mul_op_neg(self):
+        self.vmac.flags |= ZERO
+        value = self.vmac.mul_op(0xFFFF, 0xFFFF)
+        self.assertEqual(value, 1)
+        self.assertFalse(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_mul_op_neg_overflow(self):
+        self.vmac.flags |= ZERO | NEGATIVE
+        value = self.vmac.mul_op(0x8FFF, 0x8000)
+        self.assertEqual(value, 0x8000)
+        self.assertTrue(self.vmac.flags & CARRY)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
