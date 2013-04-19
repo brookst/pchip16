@@ -185,8 +185,13 @@ class VM(object):
         return self.flag_set(value)
 
     def or_op(self, left, right):
-        """Bitwise and operation"""
+        """Bitwise or operation"""
         value = left | right
+        return self.flag_set(value)
+
+    def xor_op(self, left, right):
+        """Bitwise xor operation"""
+        value = left ^ right
         return self.flag_set(value)
 
     def add(self, op_code):

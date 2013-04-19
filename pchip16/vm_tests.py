@@ -342,17 +342,17 @@ class TestBitwiseAndCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x65000000)
 
 class TestBitwiseOr(TestVM):
-    def test_and_zero_zero_zero(self):
+    def test_or_zero_zero_zero(self):
         value = self.vmac.or_op(0, 0)
         self.assertEqual(value, 0)
         self.assertTrue(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_and_pos_pos_pos(self):
+    def test_or_pos_pos_pos(self):
         value = self.vmac.or_op(0x6666, 0x3333)
         self.assertEqual(value, 0x7777)
         self.assertFalse(self.vmac.flags & ZERO)
         self.assertFalse(self.vmac.flags & NEGATIVE)
-    def test_and_neg_neg_neg(self):
+    def test_or_neg_neg_neg(self):
         value = self.vmac.or_op(0xAAAA, 0xCCCC)
         self.assertEqual(value, 0xEEEE)
         self.assertFalse(self.vmac.flags & ZERO)
@@ -381,3 +381,25 @@ class TestBitwiseOrCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x72001023)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x73000000)
+
+class TestBitwiseXor(TestVM):
+    def test_xor_zero_zero_zero(self):
+        value = self.vmac.xor_op(0, 0)
+        self.assertEqual(value, 0)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_xor_pos_pos_pos(self):
+        value = self.vmac.xor_op(0x6666, 0x3333)
+        self.assertEqual(value, 0x5555)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_xor_neg_pos_neg(self):
+        value = self.vmac.xor_op(0xAAAA, 0x6666)
+        self.assertEqual(value, 0xCCCC)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
+    def test_xor_neg_neg_pos(self):
+        value = self.vmac.xor_op(0xAAAA, 0xCCCC)
+        self.assertEqual(value, 0x6666)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
