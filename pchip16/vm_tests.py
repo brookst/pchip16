@@ -33,6 +33,15 @@ class TestJumpCodes(TestVM):
         self.vmac.register[0x6] = 0x1
         self.vmac.execute(0x13569078)
         self.assertEqual(0x1234, self.vmac.program_counter)
+    def test_CALL_HHLL_instruction(self):
+        self.vmac.mem[0x1234] = 0x5678
+        self.vmac.program_counter = 0xBEEF
+        self.vmac.execute(0x14003412)
+        self.assertEqual(self.vmac.mem[self.vmac.stack_pointer - 2], 0xBEEF)
+        self.assertEqual(self.vmac.stack_pointer, 0xFDF2)
+        self.assertEqual(self.vmac.program_counter, 0x5678)
+    def test_invalid_instruction(self):
+        self.assertRaises(ValueError, self.vmac.execute, 0x19000000)
 
 class TestLoadCodes(TestVM):
     def test_LDI_RX_HHLL_instruction(self):

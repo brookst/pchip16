@@ -75,6 +75,17 @@ class VM(object):
 
             if self.register[x_reg] == self.register[y_reg]:
                 self.program_counter = (hh_addr << 8) + ll_addr
+        elif op_code >> 16 == 0x1400:
+            #"""CALL HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            addr = (hh_addr << 8) + ll_addr
+            self.mem[self.stack_pointer] = self.program_counter
+            self.stack_pointer += 2
+            self.program_counter = self.mem[addr]
+        else:
+            raise ValueError("Invalid op code")
 
     def load(self, op_code):
         """Loads"""
