@@ -148,7 +148,10 @@ class VM(object):
         else:
             # Clear OVERFLOW bit
             self.flags &= ~OVERFLOW
+        return self.flag_set(value)
             
+    def flag_set(self, value):
+        """Set ZERO and NEGATIVE flags for value"""
         # Set/clear ZERO flag if value is zero/non-zero
         if value == 0x0:
             self.flags |= ZERO
@@ -169,6 +172,11 @@ class VM(object):
             self.flags ^= OVERFLOW
         self.flags ^= CARRY
         return value
+
+    def and_op(self, left, right):
+        """Bitwise and operation"""
+        value = left & right
+        return self.flag_set(value)
 
     def add(self, op_code):
         """Addition"""

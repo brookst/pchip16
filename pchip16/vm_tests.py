@@ -275,3 +275,20 @@ class TestSubtractionCodes(TestVM):
         self.assertRaises(ValueError, self.vmac.execute, 0x54001234)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x55000000)
+
+class TestBitwiseAnd(TestVM):
+    def test_and_zero_zero_zero(self):
+        value = self.vmac.and_op(0, 0)
+        self.assertEqual(value, 0)
+        self.assertTrue(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_and_pos_pos_pos(self):
+        value = self.vmac.and_op(0x6666, 0x3333)
+        self.assertEqual(value, 0x2222)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertFalse(self.vmac.flags & NEGATIVE)
+    def test_and_neg_neg_neg(self):
+        value = self.vmac.and_op(0xAAAA, 0xCCCC)
+        self.assertEqual(value, 0x8888)
+        self.assertFalse(self.vmac.flags & ZERO)
+        self.assertTrue(self.vmac.flags & NEGATIVE)
