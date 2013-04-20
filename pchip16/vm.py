@@ -88,6 +88,12 @@ class VM(object):
             #"""RET"""
             self.stack_pointer -= 2
             self.program_counter = self.mem[self.stack_pointer]
+        elif op_code >> 20 == 0x160:
+            #"""JMP_RX"""
+            mask_code(op_code, 0xFFFF)
+            x_reg = (op_code >> 16) & 0xF
+
+            self.program_counter = self.register[x_reg]
         else:
             raise ValueError("Invalid op code")
 
