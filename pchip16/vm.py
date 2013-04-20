@@ -94,7 +94,7 @@ class VM(object):
             x_reg = (op_code >> 16) & 0xF
 
             self.program_counter = self.register[x_reg]
-        elif op_code >> 20 == 0x170:
+        elif op_code >> 20 == 0x180:
             #"""CALL RX"""
             mask_code(op_code, 0xFFFF)
             x_reg = (op_code >> 16) & 0xF
