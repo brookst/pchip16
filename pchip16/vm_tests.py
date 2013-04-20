@@ -52,6 +52,14 @@ class TestJumpCodes(TestVM):
         self.vmac.execute(0x16010000)
         self.assertEqual(self.vmac.program_counter, 0xBEEF)
         self.assertRaises(ValueError, self.vmac.execute, 0x16001234)
+    def test_CALL_RX_instruction(self):
+        self.vmac.register[1] = 0x5678
+        self.vmac.program_counter = 0xBEEF
+        self.vmac.execute(0x17010000)
+        self.assertEqual(self.vmac.mem[self.vmac.stack_pointer - 2], 0xBEEF)
+        self.assertEqual(self.vmac.stack_pointer, 0xFDF2)
+        self.assertEqual(self.vmac.program_counter, 0x5678)
+        self.assertRaises(ValueError, self.vmac.execute, 0x17001234)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x19000000)
 

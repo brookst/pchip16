@@ -94,6 +94,14 @@ class VM(object):
             x_reg = (op_code >> 16) & 0xF
 
             self.program_counter = self.register[x_reg]
+        elif op_code >> 20 == 0x170:
+            #"""CALL RX"""
+            mask_code(op_code, 0xFFFF)
+            x_reg = (op_code >> 16) & 0xF
+
+            self.mem[self.stack_pointer] = self.program_counter
+            self.stack_pointer += 2
+            self.program_counter = self.register[x_reg]
         else:
             raise ValueError("Invalid op code")
 
