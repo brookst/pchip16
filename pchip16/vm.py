@@ -84,6 +84,10 @@ class VM(object):
             self.mem[self.stack_pointer] = self.program_counter
             self.stack_pointer += 2
             self.program_counter = self.mem[addr]
+        elif op_code == 0x15000000:
+            #"""RET"""
+            self.stack_pointer -= 2
+            self.program_counter = self.mem[self.stack_pointer]
         else:
             raise ValueError("Invalid op code")
 

@@ -40,6 +40,13 @@ class TestJumpCodes(TestVM):
         self.assertEqual(self.vmac.mem[self.vmac.stack_pointer - 2], 0xBEEF)
         self.assertEqual(self.vmac.stack_pointer, 0xFDF2)
         self.assertEqual(self.vmac.program_counter, 0x5678)
+    def test_RET_instruction(self):
+        self.vmac.stack_pointer = 0xFDF2
+        self.vmac.mem[0xFDF0] = 0xBEEF
+        self.vmac.program_counter = 0x5678
+        self.vmac.execute(0x15000000)
+        self.assertEqual(self.vmac.stack_pointer, 0xFDF0)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
     def test_invalid_instruction(self):
         self.assertRaises(ValueError, self.vmac.execute, 0x19000000)
 
