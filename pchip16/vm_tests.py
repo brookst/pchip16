@@ -27,6 +27,41 @@ class TestJumpCodes(TestVM):
         self.assertEqual(0, self.vmac.program_counter)
         self.vmac.execute(0x10003412)
         self.assertEqual(0x1234, self.vmac.program_counter)
+    def test_JZ_HHLL_instruction(self):
+        self.vmac.execute(0x1200EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= ZERO
+        self.vmac.execute(0x1200EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_JNZ_HHLL_instruction(self):
+        self.vmac.flags |= ZERO
+        self.vmac.execute(0x1201EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~ZERO
+        self.vmac.execute(0x1201EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_JN_HHLL_instruction(self):
+        self.vmac.execute(0x1203EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= NEGATIVE
+        self.vmac.execute(0x1203EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_JNN_HHLL_instruction(self):
+        self.vmac.flags |= NEGATIVE
+        self.vmac.execute(0x1204EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.execute(0x1204EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_JP_HHLL_instruction(self):
+        self.vmac.flags |= NEGATIVE
+        self.vmac.flags |= ZERO
+        self.vmac.execute(0x1204EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.flags &= ~ZERO
+        self.vmac.execute(0x1204EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
     def test_JME_RX_RY_HHLL_instruction(self):
         self.vmac.execute(0x13563412)
         self.assertEqual(0x1234, self.vmac.program_counter)

@@ -58,6 +58,44 @@ class VM(object):
         """Do nothig"""
         pass
 
+    def cond_jump(self, op_code):
+        """Conditional jumps"""
+        if op_code >> 16 == 0x1200:
+            #"""JZ, HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            if self.flags & ZERO:
+                self.program_counter = (hh_addr << 8) + ll_addr
+        elif op_code >> 16 == 0x1201:
+            #"""JNZ, HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            if not self.flags & ZERO:
+                self.program_counter = (hh_addr << 8) + ll_addr
+        elif op_code >> 16 == 0x1203:
+            #"""JZ, HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            if self.flags & NEGATIVE:
+                self.program_counter = (hh_addr << 8) + ll_addr
+        elif op_code >> 16 == 0x1204:
+            #"""JNZ, HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            if not self.flags & NEGATIVE:
+                self.program_counter = (hh_addr << 8) + ll_addr
+        elif op_code >> 16 == 0x1205:
+            #"""JP, HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            if not self.flags & NEGATIVE and not self.flags & ZERO:
+                self.program_counter = (hh_addr << 8) + ll_addr
+
     def jump(self, op_code):
         """Jumps"""
         if op_code >> 16 == 0x1000:
@@ -66,6 +104,8 @@ class VM(object):
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
             self.program_counter = (hh_addr << 8) + ll_addr
+        elif op_code >> 20 == 0x120:
+            self.cond_jump(op_code)
         elif op_code >> 24 == 0x13:
             #"""JME RX, RY, HHLL"""
             y_reg = (op_code >> 20) - 0x130
