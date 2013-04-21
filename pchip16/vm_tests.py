@@ -18,8 +18,12 @@ class TestMisc(TestVM):
         self.assertEqual(0, self.vmac.program_counter)
         self.vmac.step()
         self.assertEqual(1, self.vmac.program_counter)
-    def test_nop_instruction(self):
+    def test_NOP_instruction(self):
         self.vmac.execute(0x00000000)
+    def test_RND_instruction(self):
+        self.vmac.mem[0xDEAD] = 0xBEEF
+        self.vmac.execute(0x0701ADDE)
+        self.assertLessEqual(self.vmac.register[1], 0xBEEF)
 
 class TestJumpCodes(TestVM):
     def test_JMP_HHLL_instruction(self):

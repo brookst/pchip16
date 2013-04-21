@@ -7,6 +7,7 @@ ZERO = 0x1 << 2
 OVERFLOW = 0x1 << 6
 NEGATIVE = 0x1 << 7
 
+from random import randint
 from .memory import Memory, Register
 from .utils import is_neg, complement, to_dec, to_hex
 
@@ -34,7 +35,7 @@ class VM(object):
     def execute(self, op_code):
         """Carry out instruction specified by op_code"""
         instructions = [
-            self.nop,
+            self.misc,
             self.jump,
             self.load, 
             self.store,
@@ -54,9 +55,18 @@ class VM(object):
         except IndexError:
             raise ValueError("Invalid opcode %i" %(op_code >> 28))
 
-    def nop(self, op_code):
-        """Do nothig"""
-        pass
+    def misc(self, op_code):
+        if op_code == 0x00000000:
+            #"""Do nothing"""
+            pass
+        elif op_code >> 20 == 0x070:
+            #"""RND RX, HHLL"""
+            x_reg = (op_code >> 16) & 0xF
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            rand_max = self.mem[(hh_addr << 8) & ll_addr]
+            self.register[x_reg] = randint(0, rand_max)
 
     # pylint: disable-msg=I0011,R0911
     def cond_jump(self, branch_type):
