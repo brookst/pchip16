@@ -75,13 +75,19 @@ class VM(object):
             return not self.flags & NEGATIVE
         elif op_code >> 16 == 0x1205:
             #"""JP, HHLL"""
-            return not self.flags & NEGATIVE and not self.flags & ZERO
+            return not self.flags & (NEGATIVE | ZERO)
         elif op_code >> 16 == 0x1206:
             #"""JO, HHLL"""
             return self.flags & OVERFLOW
         elif op_code >> 16 == 0x1207:
             #"""JNO, HHLL"""
             return not self.flags & OVERFLOW
+        elif op_code >> 16 == 0x1208:
+            #"""JA, HHLL"""
+            return not self.flags & (CARRY | ZERO)
+        elif op_code >> 16 == 0x1209:
+            #"""JAE, HHLL"""
+            return not self.flags & CARRY
 
     def jump(self, op_code):
         """Jumps"""
