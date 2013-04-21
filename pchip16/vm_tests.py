@@ -101,6 +101,27 @@ class TestJumpCodes(TestVM):
         self.vmac.flags |= CARRY | ZERO
         self.vmac.execute(0x120AEFBE)
         self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_JG_HHLL_instruction(self):
+        self.vmac.flags |= OVERFLOW | ZERO
+        self.vmac.execute(0x120BEFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= NEGATIVE
+        self.vmac.flags &= ~ZERO
+        self.vmac.execute(0x120BEFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+        self.vmac.flags &= ~(NEGATIVE | OVERFLOW)
+        self.vmac.execute(0x120BADDE)
+        self.assertEqual(self.vmac.program_counter, 0xDEAD)
+    def test_JGE_HHLL_instruction(self):
+        self.vmac.flags |= OVERFLOW
+        self.vmac.execute(0x120CEFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= NEGATIVE | ZERO
+        self.vmac.execute(0x120CEFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+        self.vmac.flags &= ~(NEGATIVE | OVERFLOW)
+        self.vmac.execute(0x120CADDE)
+        self.assertEqual(self.vmac.program_counter, 0xDEAD)
     def test_JME_RX_RY_HHLL_instruction(self):
         self.vmac.execute(0x13563412)
         self.assertEqual(0x1234, self.vmac.program_counter)

@@ -94,6 +94,14 @@ class VM(object):
         elif op_code >> 16 == 0x120A:
             #"""JBE, HHLL"""
             return self.flags & CARRY and self.flags & ZERO
+        elif op_code >> 16 == 0x120B:
+            #"""JG, HHLL"""
+            on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE) 
+            return on_equal and not self.flags & ZERO
+        elif op_code >> 16 == 0x120C:
+            #"""JGE, HHLL"""
+            on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE) 
+            return on_equal and self.flags & ZERO
 
     def jump(self, op_code):
         """Jumps"""
