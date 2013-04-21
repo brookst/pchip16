@@ -59,58 +59,58 @@ class VM(object):
         pass
 
     # pylint: disable-msg=I0011,R0911
-    def cond_jump(self, op_code):
+    def cond_jump(self, branch_type):
         """Conditional jumps"""
-        if op_code >> 16 == 0x1200:
+        if branch_type == 0x0:
             #"""JZ, HHLL"""
             return self.flags & ZERO
-        elif op_code >> 16 == 0x1201:
+        elif branch_type == 0x1:
             #"""JNZ, HHLL"""
             return not self.flags & ZERO
-        elif op_code >> 16 == 0x1202:
+        elif branch_type == 0x2:
             #"""JN, HHLL"""
             return self.flags & NEGATIVE
-        elif op_code >> 16 == 0x1203:
+        elif branch_type == 0x3:
             #"""JNN, HHLL"""
             return not self.flags & NEGATIVE
-        elif op_code >> 16 == 0x1204:
+        elif branch_type == 0x4:
             #"""JP, HHLL"""
             return not self.flags & NEGATIVE and not self.flags & ZERO
-        elif op_code >> 16 == 0x1205:
+        elif branch_type == 0x5:
             #"""JO, HHLL"""
             return self.flags & OVERFLOW
-        elif op_code >> 16 == 0x1206:
+        elif branch_type == 0x6:
             #"""JNO, HHLL"""
             return not self.flags & OVERFLOW
-        elif op_code >> 16 == 0x1207:
+        elif branch_type == 0x7:
             #"""JA, HHLL"""
             return not self.flags & CARRY and not self.flags & ZERO
-        elif op_code >> 16 == 0x1208:
+        elif branch_type == 0x8:
             #"""JAE, HHLL"""
             return not self.flags & CARRY
-        elif op_code >> 16 == 0x1209:
+        elif branch_type == 0x9:
             #"""JB, HHLL"""
             return self.flags & CARRY
-        elif op_code >> 16 == 0x120A:
+        elif branch_type == 0xA:
             #"""JBE, HHLL"""
             return self.flags & CARRY and self.flags & ZERO
-        elif op_code >> 16 == 0x120B:
+        elif branch_type == 0xB:
             #"""JG, HHLL"""
             on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE) 
             return on_equal and not self.flags & ZERO
-        elif op_code >> 16 == 0x120C:
+        elif branch_type == 0xC:
             #"""JGE, HHLL"""
             on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE) 
             return on_equal and self.flags & ZERO
-        elif op_code >> 16 == 0x120D:
+        elif branch_type == 0xD:
             #"""JG, HHLL"""
             on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE) 
             return on_nequal
-        elif op_code >> 16 == 0x120E:
+        elif branch_type == 0xE:
             #"""JGE, HHLL"""
             on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE) 
             return on_nequal and self.flags & ZERO
-        elif op_code >> 16 == 0x120F:
+        elif branch_type == 0xF:
             #"""RES, HHLL"""
             raise NotImplementedError
 
@@ -127,7 +127,7 @@ class VM(object):
             hh_addr = op_code - (op_code >> 8 << 8)
             ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
 
-            if self.cond_jump(op_code):
+            if self.cond_jump(op_code >> 16 & 0xF):
                 self.program_counter = (hh_addr << 8) + ll_addr
         elif op_code >> 24 == 0x13:
             #"""JME RX, RY, HHLL"""
@@ -157,6 +157,15 @@ class VM(object):
             x_reg = (op_code >> 16) & 0xF
 
             self.program_counter = self.register[x_reg]
+        elif op_code >> 20 == 0x170:
+            #"""Cx HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            if self.cond_jump(op_code >> 16 & 0xF):
+                self.mem[self.stack_pointer] = self.program_counter
+                self.stack_pointer += 2
+                self.program_counter = (hh_addr << 8) + ll_addr
         elif op_code >> 20 == 0x180:
             #"""CALL RX"""
             mask_code(op_code, 0xFFFF)

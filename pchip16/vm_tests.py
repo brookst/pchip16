@@ -145,7 +145,7 @@ class TestJumpCodes(TestVM):
         self.vmac.flags &= ~OVERFLOW
         self.vmac.execute(0x120EADDE)
         self.assertEqual(self.vmac.program_counter, 0xDEAD)
-    def test_RES_HHLL_instruction(self):
+    def test_JRES_HHLL_instruction(self):
         self.assertRaises(NotImplementedError, self.vmac.execute, 0x120F0000)
     def test_JME_RX_RY_HHLL_instruction(self):
         self.vmac.execute(0x13563412)
@@ -172,6 +172,126 @@ class TestJumpCodes(TestVM):
         self.vmac.execute(0x16010000)
         self.assertEqual(self.vmac.program_counter, 0xBEEF)
         self.assertRaises(ValueError, self.vmac.execute, 0x16001234)
+    def test_CZ_HHLL_instruction(self):
+        self.vmac.execute(0x1700EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= ZERO
+        self.vmac.execute(0x1700EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CNZ_HHLL_instruction(self):
+        self.vmac.flags |= ZERO
+        self.vmac.execute(0x1701EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~ZERO
+        self.vmac.execute(0x1701EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CN_HHLL_instruction(self):
+        self.vmac.execute(0x1702EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= NEGATIVE
+        self.vmac.execute(0x1702EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CNN_HHLL_instruction(self):
+        self.vmac.flags |= NEGATIVE
+        self.vmac.execute(0x1703EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.execute(0x1703EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CP_HHLL_instruction(self):
+        self.vmac.flags |= NEGATIVE
+        self.vmac.flags |= ZERO
+        self.vmac.execute(0x1704EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.flags &= ~ZERO
+        self.vmac.execute(0x1704EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CO_HHLL_instruction(self):
+        self.vmac.execute(0x1705EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= OVERFLOW
+        self.vmac.execute(0x1705EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CNO_HHLL_instruction(self):
+        self.vmac.flags |= OVERFLOW
+        self.vmac.execute(0x1706EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~OVERFLOW
+        self.vmac.execute(0x1706EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CA_HHLL_instruction(self):
+        self.vmac.flags |= CARRY | ZERO
+        self.vmac.execute(0x1707EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~(CARRY | ZERO)
+        self.vmac.execute(0x1707EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CAE_HHLL_instruction(self):
+        self.vmac.flags |= CARRY
+        self.vmac.execute(0x1708EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~CARRY
+        self.vmac.execute(0x1708EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CB_HHLL_instruction(self):
+        self.vmac.execute(0x1709EFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= CARRY
+        self.vmac.execute(0x1709EFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CBE_HHLL_instruction(self):
+        self.vmac.execute(0x170AEFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= CARRY | ZERO
+        self.vmac.execute(0x170AEFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+    def test_CG_HHLL_instruction(self):
+        self.vmac.flags |= OVERFLOW | ZERO
+        self.vmac.execute(0x170BEFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= NEGATIVE
+        self.vmac.flags &= ~ZERO
+        self.vmac.execute(0x170BEFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+        self.vmac.flags &= ~(NEGATIVE | OVERFLOW)
+        self.vmac.execute(0x170BADDE)
+        self.assertEqual(self.vmac.program_counter, 0xDEAD)
+    def test_CGE_HHLL_instruction(self):
+        self.vmac.flags |= OVERFLOW
+        self.vmac.execute(0x170CEFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= NEGATIVE | ZERO
+        self.vmac.execute(0x170CEFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+        self.vmac.flags &= ~(NEGATIVE | OVERFLOW)
+        self.vmac.execute(0x170CADDE)
+        self.assertEqual(self.vmac.program_counter, 0xDEAD)
+    def test_CL_HHLL_instruction(self):
+        self.vmac.flags |= OVERFLOW | NEGATIVE
+        self.vmac.execute(0x170DEFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.execute(0x170DEFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.flags |= OVERFLOW
+        self.vmac.execute(0x170DADDE)
+        self.assertEqual(self.vmac.program_counter, 0xDEAD)
+    def test_CLE_HHLL_instruction(self):
+        self.vmac.flags |= OVERFLOW | NEGATIVE
+        self.vmac.execute(0x170EEFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= ZERO
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.execute(0x170EEFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+        self.vmac.flags |= NEGATIVE
+        self.vmac.flags &= ~OVERFLOW
+        self.vmac.execute(0x170EADDE)
+        self.assertEqual(self.vmac.program_counter, 0xDEAD)
+    def test_CRES_HHLL_instruction(self):
+        self.assertRaises(NotImplementedError, self.vmac.execute, 0x170F0000)
     def test_CALL_RX_instruction(self):
         self.vmac.register[1] = 0x5678
         self.vmac.program_counter = 0xBEEF
