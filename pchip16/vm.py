@@ -58,6 +58,7 @@ class VM(object):
         """Do nothig"""
         pass
 
+    # pylint: disable-msg=I0011,R0911
     def cond_jump(self, op_code):
         """Conditional jumps"""
         if op_code >> 16 == 0x1200:
@@ -75,6 +76,12 @@ class VM(object):
         elif op_code >> 16 == 0x1205:
             #"""JP, HHLL"""
             return not self.flags & NEGATIVE and not self.flags & ZERO
+        elif op_code >> 16 == 0x1206:
+            #"""JO, HHLL"""
+            return self.flags & OVERFLOW
+        elif op_code >> 16 == 0x1207:
+            #"""JNO, HHLL"""
+            return not self.flags & OVERFLOW
 
     def jump(self, op_code):
         """Jumps"""
