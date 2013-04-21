@@ -62,39 +62,19 @@ class VM(object):
         """Conditional jumps"""
         if op_code >> 16 == 0x1200:
             #"""JZ, HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-            if self.flags & ZERO:
-                self.program_counter = (hh_addr << 8) + ll_addr
+            return self.flags & ZERO
         elif op_code >> 16 == 0x1201:
             #"""JNZ, HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-            if not self.flags & ZERO:
-                self.program_counter = (hh_addr << 8) + ll_addr
+            return not self.flags & ZERO
         elif op_code >> 16 == 0x1203:
             #"""JZ, HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-            if self.flags & NEGATIVE:
-                self.program_counter = (hh_addr << 8) + ll_addr
+            return self.flags & NEGATIVE
         elif op_code >> 16 == 0x1204:
             #"""JNZ, HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-            if not self.flags & NEGATIVE:
-                self.program_counter = (hh_addr << 8) + ll_addr
+            return not self.flags & NEGATIVE
         elif op_code >> 16 == 0x1205:
             #"""JP, HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
-
-            if not self.flags & NEGATIVE and not self.flags & ZERO:
-                self.program_counter = (hh_addr << 8) + ll_addr
+            return not self.flags & NEGATIVE and not self.flags & ZERO
 
     def jump(self, op_code):
         """Jumps"""
@@ -105,7 +85,12 @@ class VM(object):
 
             self.program_counter = (hh_addr << 8) + ll_addr
         elif op_code >> 20 == 0x120:
-            self.cond_jump(op_code)
+            #"""Jx HHLL"""
+            hh_addr = op_code - (op_code >> 8 << 8)
+            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+
+            if self.cond_jump(op_code):
+                self.program_counter = (hh_addr << 8) + ll_addr
         elif op_code >> 24 == 0x13:
             #"""JME RX, RY, HHLL"""
             y_reg = (op_code >> 20) - 0x130
