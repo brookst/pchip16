@@ -122,6 +122,31 @@ class TestJumpCodes(TestVM):
         self.vmac.flags &= ~(NEGATIVE | OVERFLOW)
         self.vmac.execute(0x120CADDE)
         self.assertEqual(self.vmac.program_counter, 0xDEAD)
+    def test_JL_HHLL_instruction(self):
+        self.vmac.flags |= OVERFLOW | NEGATIVE
+        self.vmac.execute(0x120DEFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.execute(0x120DEFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.flags |= OVERFLOW
+        self.vmac.execute(0x120DADDE)
+        self.assertEqual(self.vmac.program_counter, 0xDEAD)
+    def test_JLE_HHLL_instruction(self):
+        self.vmac.flags |= OVERFLOW | NEGATIVE
+        self.vmac.execute(0x120EEFBE)
+        self.assertEqual(self.vmac.program_counter, 0)
+        self.vmac.flags |= ZERO
+        self.vmac.flags &= ~NEGATIVE
+        self.vmac.execute(0x120EEFBE)
+        self.assertEqual(self.vmac.program_counter, 0xBEEF)
+        self.vmac.flags |= NEGATIVE
+        self.vmac.flags &= ~OVERFLOW
+        self.vmac.execute(0x120EADDE)
+        self.assertEqual(self.vmac.program_counter, 0xDEAD)
+    def test_RES_HHLL_instruction(self):
+        self.assertRaises(NotImplementedError, self.vmac.execute, 0x120F0000)
     def test_JME_RX_RY_HHLL_instruction(self):
         self.vmac.execute(0x13563412)
         self.assertEqual(0x1234, self.vmac.program_counter)

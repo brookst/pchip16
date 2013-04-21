@@ -102,6 +102,17 @@ class VM(object):
             #"""JGE, HHLL"""
             on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE) 
             return on_equal and self.flags & ZERO
+        elif op_code >> 16 == 0x120D:
+            #"""JG, HHLL"""
+            on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE) 
+            return on_nequal
+        elif op_code >> 16 == 0x120E:
+            #"""JGE, HHLL"""
+            on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE) 
+            return on_nequal and self.flags & ZERO
+        elif op_code >> 16 == 0x120F:
+            #"""RES, HHLL"""
+            raise NotImplementedError
 
     def jump(self, op_code):
         """Jumps"""
