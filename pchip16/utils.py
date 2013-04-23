@@ -56,3 +56,10 @@ def to_dec(hexa):
     if hexa > 0x7FFF:
         return hexa - 0x10000
     return hexa
+
+def to_word(values):
+    """Convert list of bytes to sinle word"""
+    ret = 0
+    for i, value in enumerate(values):
+        ret |= value << (8 * i)
+    return ret
