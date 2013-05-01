@@ -6,9 +6,12 @@ from array import array
 
 class Memory(object):
     """Memory with 16-bit reads and writes"""
-    def __init__(self, size = 2**16):
+    def __init__(self, data=None, size = 2**16):
         self.size = size
-        self._mem = array('B', (0 for i in range(size) ) )
+        if data is None:
+            self._mem = array('B', (0 for i in range(size) ) )
+        else:
+            self.fromstring(data)
     def __getitem__(self, index):
         return (self._mem[index + 1] << 8) + self._mem[index]
     def __setitem__(self, index, value):
@@ -18,7 +21,22 @@ class Memory(object):
         self._mem[index] = 0
         self._mem[index + 1] = 0
     def __len__(self):
-        return self.size
+        """Return the highest non-zero address in normal memory"""
+        end = 0xFDF0
+        while not self[end - 2]:
+            end -= 2
+        return end
+
+    def tostring(self):
+        """Return string representation of memory contents"""
+        return self._mem[0:len(self)].tostring()
+
+    def fromstring(self, data):
+        """Return string representation of memory contents"""
+        self._mem = array('B')
+        self._mem.fromstring(data)
+        self._mem.extend((0 for i in range(2**16 - len(data))))
+
 
 class Register(array):
     """16 x 16 bit registers"""
