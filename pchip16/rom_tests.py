@@ -1,10 +1,9 @@
-
 """
 pchip16 rom test runner
 """
 #pylint: disable=I0011, R0904
 
-FILE_PATH = "Bounce.c16"
+FILE_PATH = "data/Bounce.c16"
 
 import unittest
 from pchip16 import ROM
