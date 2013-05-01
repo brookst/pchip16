@@ -2,12 +2,15 @@
 pchip16 ROM module - for loading programs into memory from file
 """
 
-from .memory import Memory
 from .utils import to_word
+from crcmod import mkCrcFun
+from array import array
+
+CRC32_FUNC = mkCrcFun(0x104C11DB7, initCrc=0, xorOut=0xFFFFFFFF)
 
 class ROM(object):
     """Memory contents and state representation"""
-    mem = Memory()
+    data = array('B')
     version = "1.0"
     size = 0
     start_address = 0
@@ -32,3 +35,10 @@ class ROM(object):
             self.size = to_word(header[6:0xA])
             self.start_address = (header[0xB] << 8) + header[0xA] 
             self.checksum = to_word(header[0xC:0x10])
+        data = file_handle.read()
+        self.data = array('B')
+        self.data.fromstring(data)
+
+    def calc_checksum(self):
+        """Compute the checksum of current ROM data"""
+        return CRC32_FUNC(self.data.tostring() )

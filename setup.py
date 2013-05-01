@@ -23,6 +23,7 @@ setup(name='pchip16',
       author_email='brooks@skoorb.net',
       packages=['pchip16'],
       zip_safe=False,
+      install_requires=['crcmod'],
       test_suite='nose.collector',
       tests_require=['nose'],
 )

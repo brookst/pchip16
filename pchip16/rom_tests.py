@@ -22,6 +22,7 @@ class TestROM(unittest.TestCase):
             self.rom = ROM(file_handle)
 
 class TestHeaders(TestROM):
+    """Test header fields are read correctly"""
     def test_rom_version(self):
         self.assertEqual(self.rom.version, "1.1")
     def test_rom_size(self):
@@ -30,3 +31,8 @@ class TestHeaders(TestROM):
         self.assertEqual(self.rom.start_address, 0x0)
     def test_rom_checksum(self):
         self.assertEqual(self.rom.checksum, 0xD7B62213)
+
+class TestChecksum(TestROM):
+    """Test checksum algorithm gives the same result"""
+    def test_checksum(self):
+        self.assertEqual(self.rom.calc_checksum(), 0xD7B62213)
