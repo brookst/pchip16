@@ -47,6 +47,10 @@ class Interface:
         self._display_surf = pygame.display.set_mode(self.size,
             pygame.HWSURFACE | pygame.DOUBLEBUF)
         self._running = True
+
+    def stop(self):
+        """Stop running"""
+        self._running = False
  
     def event(self, event):
         """Handle input"""
@@ -88,5 +92,9 @@ class Interface:
         self.cleanup()
  
 if __name__ == "__main__" :
+    from thread import start_new_thread
+    from time import sleep
     INTERFACE = Interface()
-    INTERFACE.execute()
+    start_new_thread(INTERFACE.execute, () )
+    sleep(2)
+    INTERFACE.stop()
