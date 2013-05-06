@@ -63,3 +63,9 @@ def to_word(values):
     for i, value in enumerate(values):
         ret |= value << (8 * i)
     return ret
+
+def nibble_iter(data):
+    """Yield back data, one nibble at a time"""
+    while data:
+        yield data & 0xF
+        data = data >> 4
