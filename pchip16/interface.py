@@ -3,6 +3,7 @@ pchip16 interface - graphics audio and controls module
 """
 
 import pygame
+from threading import Thread
 from utils import nibble_iter
 
 PALETTE = {
@@ -25,9 +26,10 @@ PALETTE = {
 }
 
 # pylint: disable-msg=I0011,R0903
-class Interface:
+class Interface(Thread):
     """Interface to graphics audio and controls"""
     def __init__(self):
+        Thread.__init__(self)
         self.frame = 0
         self.vblank = True
         self._running = False
@@ -85,7 +87,7 @@ class Interface:
         """Destroy everything in use"""
         pygame.quit()
  
-    def execute(self):
+    def run(self):
         """Control events"""
         if self.init() == False:
             self._running = False
