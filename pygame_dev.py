@@ -3,6 +3,7 @@ pchip16 interface - graphics audio and controls module
 """
 
 import pygame
+from threading import Thread
 
 DIRMAP = {
     273:(0, -1), #Up
@@ -30,9 +31,10 @@ class Sprite(pygame.sprite.Sprite):
             if nibble:
                 self.image.set_at( (i % width, i // height), (255, 255, 255) )
  
-class Interface:
+class Interface(Thread):
     """Interface to graphics audio and controls"""
     def __init__(self):
+        Thread.__init__(self)
         self.frame = 0
         self.vblank = True
         self._running = True
@@ -79,7 +81,7 @@ class Interface:
         """Destroy everything in use"""
         pygame.quit()
  
-    def execute(self):
+    def run(self):
         """Control events"""
         if self.init() == False:
             self._running = False
@@ -92,9 +94,9 @@ class Interface:
         self.cleanup()
  
 if __name__ == "__main__" :
-    from thread import start_new_thread
     from time import sleep
     INTERFACE = Interface()
-    start_new_thread(INTERFACE.execute, () )
+    INTERFACE.start()
     sleep(2)
     INTERFACE.stop()
+    INTERFACE.join()
