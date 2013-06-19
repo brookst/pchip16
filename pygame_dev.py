@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 pchip16 interface - graphics audio and controls module
 """
