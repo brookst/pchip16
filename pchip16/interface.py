@@ -4,7 +4,7 @@ pchip16 interface - graphics audio and controls module
 
 import pygame
 from threading import Thread
-from utils import nibble_iter
+from .utils import nibble_iter
 
 PALETTE = {
     0x0:pygame.color.Color(0x00000000),

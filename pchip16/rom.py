@@ -25,8 +25,9 @@ class ROM(object):
         """Load contents of file_handle into memory"""
         self.size = file_handle.tell()
         header = file_handle.read(16)
-        if header[0:4] == "CH16":
-            header = [ord(c) for c in header]
+        if header[0:4] == b"CH16":
+            ## Do this conversion in a 2/3 safe method
+            header = [ord(header[c:c+1]) for c in range(len(header))]
             version = header[5]
             self.version = "%d.%d" % (version >> 4, version & 0xF)
             size = header[6:0xA]

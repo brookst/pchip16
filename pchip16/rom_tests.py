@@ -3,10 +3,11 @@ pchip16 rom test runner
 """
 #pylint: disable=I0011, R0904
 
-FILE_PATH = "data/Bounce.c16"
-
 import unittest
 from pchip16 import ROM
+from os.path import join
+
+FILE_PATH = join("data", "Bounce.c16")
 
 class TestInit(unittest.TestCase):
     def test_empty_init(self):
