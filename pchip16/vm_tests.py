@@ -17,7 +17,7 @@ class TestMisc(TestVM):
     def test_program_counter(self):
         self.assertEqual(0, self.vmac.program_counter)
         self.vmac.step()
-        self.assertEqual(1, self.vmac.program_counter)
+        self.assertEqual(4, self.vmac.program_counter)
     def test_NOP_instruction(self):
         self.vmac.execute(0x00000000)
     def test_RND_instruction(self):
