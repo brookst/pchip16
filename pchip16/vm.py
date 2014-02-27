@@ -37,7 +37,7 @@ class VM(object):
         instructions = [
             self.misc,
             self.jump,
-            self.load, 
+            self.load,
             self.store,
             self.add,
             self.sub,
@@ -106,19 +106,19 @@ class VM(object):
             return self.flags & CARRY and self.flags & ZERO
         elif branch_type == 0xB:
             #"""JG, HHLL"""
-            on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE) 
+            on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE)
             return on_equal and not self.flags & ZERO
         elif branch_type == 0xC:
             #"""JGE, HHLL"""
-            on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE) 
+            on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE)
             return on_equal and self.flags & ZERO
         elif branch_type == 0xD:
             #"""JG, HHLL"""
-            on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE) 
+            on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE)
             return on_nequal
         elif branch_type == 0xE:
             #"""JGE, HHLL"""
-            on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE) 
+            on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE)
             return on_nequal and self.flags & ZERO
         elif branch_type == 0xF:
             #"""RES, HHLL"""
@@ -275,7 +275,7 @@ class VM(object):
             # Clear OVERFLOW bit
             self.flags &= ~OVERFLOW
         return self.flag_set(value)
-            
+
     def flag_set(self, value):
         """Set ZERO and NEGATIVE flags for value"""
         # Set/clear ZERO flag if value is zero/non-zero

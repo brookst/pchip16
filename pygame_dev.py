@@ -31,7 +31,7 @@ class Sprite(pygame.sprite.Sprite):
         for i, nibble in enumerate(nibble_iter(data) ):
             if nibble:
                 self.image.set_at( (i % width, i // height), (255, 255, 255) )
- 
+
 class Interface(Thread):
     """Interface to graphics audio and controls"""
     def __init__(self):
@@ -43,7 +43,7 @@ class Interface(Thread):
         self.clock = pygame.time.Clock()
         self.size = 320, 240
         self.sprite = Sprite(0xFFFFF00FF00FFFFF, 4, 4, (0, 0) )
- 
+
     def init(self):
         """Create display"""
         pygame.init()
@@ -54,7 +54,7 @@ class Interface(Thread):
     def stop(self):
         """Stop running"""
         self._running = False
- 
+
     def event(self, event):
         """Handle input"""
         if event.type == pygame.QUIT:
@@ -81,19 +81,19 @@ class Interface(Thread):
     def cleanup(self):
         """Destroy everything in use"""
         pygame.quit()
- 
+
     def run(self):
         """Control events"""
         if self.init() == False:
             self._running = False
- 
+
         while( self._running ):
             for event in pygame.event.get():
                 self.event(event)
             self.loop()
             self.render()
         self.cleanup()
- 
+
 if __name__ == "__main__" :
     from time import sleep
     INTERFACE = Interface()
