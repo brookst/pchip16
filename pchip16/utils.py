@@ -5,6 +5,22 @@ pchip16 utils - tools for debugging
 import inspect
 from pchip16.vm import CARRY, ZERO, OVERFLOW, NEGATIVE
 
+INSTRUCTIONS = [
+        'misc',
+        'jump',
+        'load',
+        'store',
+        'add',
+        'sub',
+        'bit_and',
+        'bit_or',
+        'bit_xor',
+        'mul',
+        'div',
+        'shift',
+        'stack',
+    ]
+
 def print_local(*selection):
     """Print selected variables from enclosing scope"""
     form_string = "%s: %%(%s)s "

@@ -9,7 +9,7 @@ NEGATIVE = 0x1 << 7
 
 from random import randint
 from .memory import Memory, Register
-from .utils import is_neg, complement, to_dec, to_hex
+from .utils import is_neg, complement, to_dec, to_hex, INSTRUCTIONS
 
 def mask_code(op_code, mask):
     """Raise error for op_codes in mask"""
@@ -21,16 +21,25 @@ class VM(object):
     program_counter = 0
     stack_pointer = 0xFDF0
     flags = 0
-    mem = Memory()
     register = Register()
 
-    def __init__(self):
+    def __init__(self, rom=None):
         for reg in range(0xf):
             self.register[reg] = 0
+        if rom is None:
+            self.mem = Memory()
+        else:
+            self.mem = Memory(rom.data)
 
     def step(self):
         """Execute instruction at self.program_counter and increment"""
-        self.program_counter += 1
+        op_code = (self.mem[self.program_counter] << 16) + (self.mem[self.program_counter + 2])
+        print(op_code)
+        op_code = ((op_code & 0xff000000) >> 8) + ((op_code & 0xff0000) << 8) + ((op_code & 0xff00) >> 8) + ((op_code & 0xff) << 8)
+        print(hex(op_code))
+        print(INSTRUCTIONS[op_code >> 28])
+        self.execute(op_code)
+        self.program_counter += 4
 
     def execute(self, op_code):
         """Carry out instruction specified by op_code"""
