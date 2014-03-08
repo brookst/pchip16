@@ -23,7 +23,7 @@ class Assembler(object):
     @staticmethod
     def parse_line(line):
         """Parse source line into tokens"""
-        uncommented = re.search("([^#]*)", line.upper()).group()
+        uncommented = re.search("([^;]*)", line.upper()).group()
         tokens = re.findall(r"[\w]+", uncommented)
         if not tokens:
             return None # Ignore empty lines
@@ -88,10 +88,10 @@ def test():
     asm = Assembler()
 
     asm.list()
-    print(asm.assemble_line("NOP #NO-OP"))
+    print(asm.assemble_line("NOP ;NO-OP"))
     print(asm.assemble_line("CLS"))
-    print(asm.assemble_line("JMP R1#Jump to addr in RX"))
-    print(asm.assemble_line("MOV r1, rf #Move r1 to rf"))
+    print(asm.assemble_line("JMP R1;Jump to addr in RX"))
+    print(asm.assemble_line("MOV r1, rf ;Move r1 to rf"))
     print(asm.assemble_line("addi r2, 0x1234"))
     print("should: 05215634")
     print(asm.assemble_line("DRW r1 r2 0x3456"))

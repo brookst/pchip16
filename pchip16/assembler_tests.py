@@ -20,9 +20,9 @@ class TestParsing(TestAssembler):
     def test_tabbed_lines(self):
         self.assertIsNone(self.asm.parse_line("	"))
     def test_comment_lines(self):
-        self.assertIsNone(self.asm.parse_line("#"))
-        self.assertIsNone(self.asm.parse_line("#This is a comment"))
-        self.assertIsNone(self.asm.parse_line(" #"))
+        self.assertIsNone(self.asm.parse_line(";"))
+        self.assertIsNone(self.asm.parse_line(";This is a comment"))
+        self.assertIsNone(self.asm.parse_line(" ;"))
 
     def test_nullary_op(self):
         tokens = ["NOP"]
@@ -39,7 +39,7 @@ class TestParsing(TestAssembler):
 
     def test_ops_with_comment(self):
         tokens = ["MOV", "RX", "RY"]
-        self.assertEqual(self.asm.parse_line("MOV RX RY #This is a comment"), tokens)
+        self.assertEqual(self.asm.parse_line("MOV RX RY ;This is a comment"), tokens)
     def test_lowercase(self):
         tokens = ["MOV", "RX", "RY"]
         self.assertEqual(self.asm.parse_line("mov rx ry"), tokens)
