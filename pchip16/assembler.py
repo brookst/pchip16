@@ -2,8 +2,7 @@
 pchip16 assembler
 """
 #pylint: disable=W0142
-from pchip16.instructions import INSTRUCTIONS, NONE, XREG, YREG, ZREG, \
-     AWORD, BWORD, SignatureMismatch
+from pchip16.instructions import INSTRUCTIONS, SignatureMismatch
 import re
 
 class Assembler(object):
@@ -38,39 +37,6 @@ class Assembler(object):
             return 'word'
         else:
             raise Exception("Operand %s type unknown" %operand)
-
-    @staticmethod
-    def resolve_operands(tokens):
-        """Organise operands from tokens"""
-        ret = {'op': tokens[0]}
-        sig = NONE
-        regs = ['x', 'y', 'z']
-        words = ['a', 'b']
-        reg = 0
-        word = 0
-        for token in tokens[1:]:
-            if token[0] == 'R' and len(token) == 2:
-                ret[regs[reg]] = int(token[1], 16)
-                reg += 1
-            elif token[:2] == '0X':
-                val = int(token[2:], 16)
-                lla = val & 0xFF
-                hha = val >> 8
-                ret[words[word]] = (lla << 8) | hha
-                word += 1
-            else:
-                raise Exception("Operand %s type unknown" %token)
-        if 'x' in ret:
-            sig |= XREG
-        if 'y' in ret:
-            sig |= YREG
-        if 'z' in ret:
-            sig |= ZREG
-        if 'a' in ret:
-            sig |= AWORD
-        if 'b' in ret:
-            sig |= BWORD
-        return sig, ret
 
     @staticmethod
     def assemble_line(line):

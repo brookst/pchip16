@@ -3,15 +3,6 @@ chip16 instruction format strings
 """
 #pylint: disable=W0142
 
-ADDS = {0x42: 'ADD'}
-NONE = 0
-XREG = 1
-YREG = 2
-ZREG = 4
-AWORD = 8
-BWORD = 16
-REG = [XREG, YREG, ZREG]
-
 class SignatureMismatch(Exception):
     """Tokens do not match operator signature"""
     pass
