@@ -42,12 +42,14 @@ class Assembler(object):
     def assemble_line(line):
         """Generate assembly corresponding to one line of source"""
         tokens = Assembler.parse_line(line)
+        if not tokens:
+            return ""
         for instruction in INSTRUCTIONS[tokens[0]]:
             try:
                 return instruction(tokens)
             except SignatureMismatch:
                 pass
-        raise SignatureMismatch()
+        raise SignatureMismatch(tokens)
 
 def test():
     """Call list on a temporary Assembler"""

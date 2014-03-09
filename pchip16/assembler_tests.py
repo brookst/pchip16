@@ -56,6 +56,7 @@ class TestLineAssembly(TestAssembler):
         code = b"16010000"
         self.assertEqual(self.asm.assemble_line("JMP r1"), code)
     def test_binary_op(self):
+        code = b"\x24\xf1\x00\x00"
         code = b"24f10000"
         self.assertEqual(self.asm.assemble_line("mov r1 rf"), code)
     def test_trinary_op(self):
@@ -202,12 +203,175 @@ class TestOPAssembly(TestAssembler):
         code = b"42210300"
         self.assertEqual(self.asm.assemble_line("ADD R1 R2 R3"), code)
 ## 5x - Subtraction
+    def test_SUBI_rw(self):
+        code = b"50014523"
+        self.assertEqual(self.asm.assemble_line("SUBI R1 0x2345"), code)
+    def test_SUB_rr(self):
+        code = b"51210000"
+        self.assertEqual(self.asm.assemble_line("SUB R1 R2"), code)
+    def test_SUB_rrr(self):
+        code = b"52210300"
+        self.assertEqual(self.asm.assemble_line("SUB R1 R2 R3"), code)
+    def test_CMPI_rw(self):
+        code = b"53014523"
+        self.assertEqual(self.asm.assemble_line("CMPI R1 0x2345"), code)
+    def test_CMP_rr(self):
+        code = b"54210000"
+        self.assertEqual(self.asm.assemble_line("CMP R1 R2"), code)
 ## 6x - Bitwise AND (&)
+    def test_ANDI_rw(self):
+        code = b"60014523"
+        self.assertEqual(self.asm.assemble_line("ANDI R1 0x2345"), code)
+    def test_AND_rr(self):
+        code = b"61210000"
+        self.assertEqual(self.asm.assemble_line("AND R1 R2"), code)
+    def test_AND_rrr(self):
+        code = b"62210300"
+        self.assertEqual(self.asm.assemble_line("AND R1 R2 R3"), code)
+    def test_TSTI_rw(self):
+        code = b"63014523"
+        self.assertEqual(self.asm.assemble_line("TSTI R1 0x2345"), code)
+    def test_TST_rr(self):
+        code = b"64210000"
+        self.assertEqual(self.asm.assemble_line("TST R1 R2"), code)
 ## 7x - Bitwise OR (|)
+    def test_ORI_rw(self):
+        code = b"70014523"
+        self.assertEqual(self.asm.assemble_line("ORI R1 0x2345"), code)
+    def test_OR_rr(self):
+        code = b"71210000"
+        self.assertEqual(self.asm.assemble_line("OR R1 R2"), code)
+    def test_OR_rrr(self):
+        code = b"72210300"
+        self.assertEqual(self.asm.assemble_line("OR R1 R2 R3"), code)
 ## 8x - Bitwise XOR (^)
+    def test_XORI_rw(self):
+        code = b"80014523"
+        self.assertEqual(self.asm.assemble_line("XORI R1 0x2345"), code)
+    def test_XOR_rr(self):
+        code = b"81210000"
+        self.assertEqual(self.asm.assemble_line("XOR R1 R2"), code)
+    def test_XOR_rrr(self):
+        code = b"82210300"
+        self.assertEqual(self.asm.assemble_line("XOR R1 R2 R3"), code)
 ## 9x - Multiplication
+    def test_MULI_rw(self):
+        code = b"90014523"
+        self.assertEqual(self.asm.assemble_line("MULI R1 0x2345"), code)
+    def test_MUL_rr(self):
+        code = b"91210000"
+        self.assertEqual(self.asm.assemble_line("MUL R1 R2"), code)
+    def test_MUL_rrr(self):
+        code = b"92210300"
+        self.assertEqual(self.asm.assemble_line("MUL R1 R2 R3"), code)
 ## Ax - Division
+    def test_DIVI_rw(self):
+        code = b"a0014523"
+        self.assertEqual(self.asm.assemble_line("DIVI R1 0x2345"), code)
+    def test_DIV_rr(self):
+        code = b"a1210000"
+        self.assertEqual(self.asm.assemble_line("DIV R1 R2"), code)
+    def test_DIV_rrr(self):
+        code = b"a2210300"
+        self.assertEqual(self.asm.assemble_line("DIV R1 R2 R3"), code)
+    def test_MODI_rw(self):
+        code = b"a3014523"
+        self.assertEqual(self.asm.assemble_line("MODI R1 0x2345"), code)
+    def test_MOD_rr(self):
+        code = b"a4210000"
+        self.assertEqual(self.asm.assemble_line("MOD R1 R2"), code)
+    def test_MOD_rrr(self):
+        code = b"a5210300"
+        self.assertEqual(self.asm.assemble_line("MOD R1 R2 R3"), code)
+    def test_REMI_rw(self):
+        code = b"a6014523"
+        self.assertEqual(self.asm.assemble_line("REMI R1 0x2345"), code)
+    def test_REM_rr(self):
+        code = b"a7210000"
+        self.assertEqual(self.asm.assemble_line("REM R1 R2"), code)
+    def test_REM_rrr(self):
+        code = b"a8210300"
+        self.assertEqual(self.asm.assemble_line("REM R1 R2 R3"), code)
 ## Bx - Logical/Arithmetic Shifts
+    def test_SHL_rn(self):
+        code = b"b0010200"
+        self.assertEqual(self.asm.assemble_line("SHL R1 0x2"), code)
+    def test_SHR_rn(self):
+        code = b"b1010200"
+        self.assertEqual(self.asm.assemble_line("SHR R1 0x2"), code)
+    def test_SAL_rn(self):
+        code = b"b0010200"
+        self.assertEqual(self.asm.assemble_line("SAL R1 0x2"), code)
+    def test_SAR_rn(self):
+        code = b"b1010200"
+        self.assertEqual(self.asm.assemble_line("SAR R1 0x2"), code)
+    def test_SHL_rr(self):
+        code = b"b2210000"
+        self.assertEqual(self.asm.assemble_line("SHL R1 R2"), code)
+    def test_SHR_rr(self):
+        code = b"b3210000"
+        self.assertEqual(self.asm.assemble_line("SHR R1 R2"), code)
+    def test_SAL_rr(self):
+        code = b"b4210000"
+        self.assertEqual(self.asm.assemble_line("SAL R1 R2"), code)
+    def test_SAR_rr(self):
+        code = b"b5210000"
+        self.assertEqual(self.asm.assemble_line("SAR R1 R2"), code)
 ## Cx - Push/Pop
+    def test_PUSH_r(self):
+        code = b"c0010000"
+        self.assertEqual(self.asm.assemble_line("PUSH R1"), code)
+    def test_SHR_r(self):
+        code = b"c1010000"
+        self.assertEqual(self.asm.assemble_line("POP R1"), code)
+    def test_PUSHALL(self):
+        code = b"c2000000"
+        self.assertEqual(self.asm.assemble_line("PUSHALL"), code)
+    def test_POPALL(self):
+        code = b"c3000000"
+        self.assertEqual(self.asm.assemble_line("POPALL"), code)
+    def test_PUSHF(self):
+        code = b"c4000000"
+        self.assertEqual(self.asm.assemble_line("PUSHF"), code)
+    def test_POPF(self):
+        code = b"c5000000"
+        self.assertEqual(self.asm.assemble_line("POPF"), code)
 ## Dx - Palette
+    def test_PAL_w(self):
+        code = b"d0003412"
+        self.assertEqual(self.asm.assemble_line("PAL 0x1234"), code)
+    def test_PAL_r(self):
+        code = b"d1010000"
+        self.assertEqual(self.asm.assemble_line("PAL R1"), code)
 ## Ex - Not/Neg
+    def test_NOTI_rw(self):
+        code = b"e0014523"
+        self.assertEqual(self.asm.assemble_line("NOTI R1 0x2345"), code)
+    def test_NOT_r(self):
+        code = b"e1010000"
+        self.assertEqual(self.asm.assemble_line("NOT R1"), code)
+    def test_NOT_rr(self):
+        code = b"e2210000"
+        self.assertEqual(self.asm.assemble_line("NOT R1 R2"), code)
+    def test_NEGI_rw(self):
+        code = b"e3014523"
+        self.assertEqual(self.asm.assemble_line("NEGI R1 0x2345"), code)
+    def test_NEG_r(self):
+        code = b"e4010000"
+        self.assertEqual(self.asm.assemble_line("NEG R1"), code)
+    def test_NEG_rr(self):
+        code = b"e5210000"
+        self.assertEqual(self.asm.assemble_line("NEG R1 R2"), code)
+
+class TestExampleCode(TestAssembler):
+    source = """ ldi r6, 3   ; reset score
+        ldi r0, 0xFF13
+        ;stm r0, ascii_score_val ; and in memory too!
+        ldi r0, 40
+        stm r0, 0xF300  ; timer mult. const. = 40
+        ldi r0, 0x15
+        stm r0, 0xF302  ; move cnt reset value = 0x15
+    """
+    def test_assembly(self):
+        self.asm.source = self.source
+        print(self.asm.assemble())
