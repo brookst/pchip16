@@ -51,21 +51,25 @@ class Assembler(object):
                 pass
         raise SignatureMismatch(tokens)
 
+    def assemble(self):
+        """Generate assembly for the current source"""
+        code = b""
+        for line in self.source.splitlines():
+            code += self.assemble_line(line)
+        return code
+
 def test():
     """Call list on a temporary Assembler"""
     asm = Assembler()
-
-    asm.list()
-    print(asm.assemble_line("NOP ;NO-OP"))
-    print(asm.assemble_line("CLS"))
-    print(asm.assemble_line("JMP R1;Jump to addr in RX"))
-    print(asm.assemble_line("MOV r1, rf ;Move r1 to rf"))
-    print(asm.assemble_line("addi r2, 0x1234"))
-    print("should: 05215634")
-    print(asm.assemble_line("DRW r1 r2 0x3456"))
-    print("should: 06210300")
-    print(asm.assemble_line("DRW r1 r2 r3"))
-    print(asm.assemble_line("SNG 0xFF, 0x1234"))
+    asm.source = """ ldi r6, 3   ; reset score
+        ldi r0, 0xFF13
+        ;stm r0, ascii_score_val ; and in memory too!
+        ldi r0, 40
+        stm r0, 0xF300  ; timer mult. const. = 40
+        ldi r0, 0x15
+        stm r0, 0xF302  ; move cnt reset value = 0x15
+    """
+    print(asm.assemble())
 
 if __name__ == '__main__':
     test()
