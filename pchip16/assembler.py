@@ -23,7 +23,7 @@ class Assembler(object):
     def parse_line(line):
         """Parse source line into tokens"""
         uncommented = re.search("([^;]*)", line.upper()).group()
-        tokens = re.findall(r"[\w]+", uncommented)
+        tokens = re.findall(r"[-\w]+", uncommented)
         if not tokens:
             return None # Ignore empty lines
         return tokens
