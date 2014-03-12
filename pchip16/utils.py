@@ -82,6 +82,6 @@ def to_word(values):
 
 def nibble_iter(data):
     """Yield back data, one nibble at a time"""
-    while data:
-        yield data & 0xF
-        data = data >> 4
+    for byte in data:
+        yield (ord(byte) & 0xF0) >> 4
+        yield ord(byte) & 0xF
