@@ -1,6 +1,7 @@
 """
 pchip16 interface - graphics audio and controls module
 """
+#pylint: disable-msg=R0902,R0903,E1121
 
 import pygame
 from threading import Thread
@@ -18,14 +19,13 @@ PALETTE = {
     0x8:pygame.color.Color(0xEAD979FF),
     0x9:pygame.color.Color(0x537A3BFF),
     0xa:pygame.color.Color(0xABD54AFF),
-    0xa:pygame.color.Color(0x252E38FF),
+    0xb:pygame.color.Color(0x252E38FF),
     0xc:pygame.color.Color(0x00467FFF),
     0xd:pygame.color.Color(0x68ABCCFF),
     0xe:pygame.color.Color(0xBCDEE4FF),
     0xf:pygame.color.Color(0xFFFFFFFF),
 }
 
-# pylint: disable-msg=I0011,R0903
 class Interface(Thread):
     """Interface to graphics audio and controls"""
     def __init__(self):
@@ -40,7 +40,7 @@ class Interface(Thread):
         self.bg = 0, 0, 0
         self.sprite_size = 0, 0
         self.sprite_flip = 0, 0
- 
+
     def init(self):
         """Create display"""
         pygame.init()
@@ -63,7 +63,7 @@ class Interface(Thread):
                 image.set_at( (i % width, i // height), self.palette[nibble] )
 
         self._display_surf.blit(image, position)
- 
+
     def event(self, event):
         """Handle input"""
         if event.type == pygame.QUIT:
@@ -86,12 +86,12 @@ class Interface(Thread):
     def cleanup(self):
         """Destroy everything in use"""
         pygame.quit()
- 
+
     def run(self):
         """Control events"""
         if self.init() == False:
             self._running = False
- 
+
         while( self._running ):
             for event in pygame.event.get():
                 self.event(event)

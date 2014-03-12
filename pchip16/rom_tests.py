@@ -12,9 +12,11 @@ FILE_PATH = join("data", "Bounce.c16")
 class TestInit(unittest.TestCase):
     def test_empty_init(self):
         rom = ROM()
+        self.assertTrue(rom)
     def test_file_init(self):
         with open(FILE_PATH, 'rb') as file_handle:
             rom = ROM(file_handle)
+            self.assertTrue(rom)
 
 class TestROM(unittest.TestCase):
     """Test functions of ROM class"""

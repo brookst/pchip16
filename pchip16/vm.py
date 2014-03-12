@@ -1,6 +1,7 @@
 """
 pchip16 VM class
 """
+#pylint: disable-msg=C0301,R0911,R0912
 
 CARRY = 0x1 << 1
 ZERO = 0x1 << 2
@@ -33,9 +34,11 @@ class VM(object):
 
     def step(self):
         """Execute instruction at self.program_counter and increment"""
-        op_code = (self.mem[self.program_counter] << 16) + (self.mem[self.program_counter + 2])
+        op_code = (self.mem[self.program_counter] << 16) + \
+            (self.mem[self.program_counter + 2])
         print(op_code)
-        op_code = ((op_code & 0xff000000) >> 8) + ((op_code & 0xff0000) << 8) + ((op_code & 0xff00) >> 8) + ((op_code & 0xff) << 8)
+        op_code = ((op_code & 0xff000000) >> 8) + ((op_code & 0xff0000) << 8) \
+            + ((op_code & 0xff00) >> 8) + ((op_code & 0xff) << 8)
         print(hex(op_code))
         print(INSTRUCTIONS[op_code >> 28])
         self.execute(op_code)
@@ -65,6 +68,7 @@ class VM(object):
             raise ValueError("Invalid opcode %i" %(op_code >> 28))
 
     def misc(self, op_code):
+        """Misc and AV ops"""
         if op_code == 0x00000000:
             #"""Do nothing"""
             pass
@@ -77,7 +81,6 @@ class VM(object):
             rand_max = self.mem[(hh_addr << 8) & ll_addr]
             self.register[x_reg] = randint(0, rand_max)
 
-    # pylint: disable-msg=I0011,R0911
     def cond_jump(self, branch_type):
         """Conditional jumps"""
         if branch_type == 0x0:
