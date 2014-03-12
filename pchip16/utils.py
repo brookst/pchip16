@@ -2,8 +2,9 @@
 pchip16 utils - tools for debugging
 """
 
-import inspect
+from __future__ import print_function
 from pchip16.vm import CARRY, ZERO, OVERFLOW, NEGATIVE
+from inspect import currentframe
 
 INSTRUCTIONS = [
         'misc',
@@ -24,13 +25,13 @@ INSTRUCTIONS = [
 def print_local(*selection):
     """Print selected variables from enclosing scope"""
     form_string = "%s: %%(%s)s "
-    frame = inspect.currentframe()
+    frame = currentframe()
     _select_locals(frame, form_string, *selection)
 
 def print_hex(*selection):
     """Print selected variables from enclosing scope"""
     form_string = "%s: 0x%%(%s)x "
-    frame = inspect.currentframe()
+    frame = currentframe()
     _select_locals(frame, form_string, *selection)
 
 def _select_locals(frame, form_string, *selection):
