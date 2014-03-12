@@ -2,8 +2,9 @@
 pchip16 assembler
 """
 #pylint: disable=W0142
+from __future__ import print_function
 from pchip16.instructions import INSTRUCTIONS, SignatureMismatch
-import re
+from re import search, findall
 
 class Assembler(object):
     """Assembler for a contigious code block"""
@@ -22,8 +23,8 @@ class Assembler(object):
     @staticmethod
     def parse_line(line):
         """Parse source line into tokens"""
-        uncommented = re.search("([^;]*)", line.upper()).group()
-        tokens = re.findall(r"[-\w]+", uncommented)
+        uncommented = search("([^;]*)", line.upper()).group()
+        tokens = findall(r"[-\w]+", uncommented)
         if not tokens:
             return None # Ignore empty lines
         return tokens
