@@ -4,7 +4,7 @@ pchip16 interface - graphics audio and controls module
 #pylint: disable-msg=R0902,R0903,E1121
 
 import pygame
-from threading import Thread
+from threading import Thread, Event
 from .utils import nibble_iter
 
 PALETTE = {
@@ -26,62 +26,93 @@ PALETTE = {
     0xf:pygame.color.Color(0xFFFFFFFF),
 }
 
+DIRMAP = {
+    273:(0, -1), #Up
+    274:(0, 1),  #Down
+    275:(1, 0),  #Right
+    276:(-1, 0), #Left
+}
+
+class NotInitializedError(Exception):
+    """Indicate the interface must be initilized first"""
+    pass
+
 class Interface(Thread):
     """Interface to graphics audio and controls"""
     def __init__(self):
         Thread.__init__(self)
         self.frame = 0
-        self.vblank = True
-        self._running = False
+        self.vblank = Event()
+        self.running = False
         self._display_surf = None
         self.clock = pygame.time.Clock()
         self.palette = PALETTE
         self.size = 320, 240
-        self.bg = 0, 0, 0
+        self.background = 0, 0, 0
         self.sprite_size = 0, 0
         self.sprite_flip = 0, 0
+        self.sprite_cache = {}
 
     def init(self):
         """Create display"""
         pygame.init()
         self._display_surf = pygame.display.set_mode(self.size,
             pygame.HWSURFACE | pygame.DOUBLEBUF)
-        self._running = True
+        self.running = True
+
+    @property
+    def inputs(self):
+        """List of inputs according to DIRMAP"""
+        ret = []
+        keys = pygame.key.get_pressed()
+        for key in DIRMAP:
+            if keys[key]:
+                ret.append(DIRMAP[key])
+        return ret
+
+    def render_sprite(self, data):
+        """Return a pygame sprite with data drawn on"""
+        image = pygame.Surface(self.sprite_size)
+        width, height = self.sprite_size
+        for i, nibble in enumerate(nibble_iter(data) ):
+            image.set_at( (i % width, i // width), self.palette[nibble] )
+        image.set_colorkey(self.palette[0x0])
+        return image
 
     def draw(self, sprite_data, position):
         """Draw sprite_data on canvas at position = (x, y)"""
-        if not self._running:
-            self.init()
-
-        if self.sprite_size == (0, 0):
-            return
-
-        image = pygame.Surface(self.sprite_size)
-        for i, nibble in enumerate(nibble_iter(sprite_data) ):
-            if nibble:
-                width, height = self.sprite_size
-                image.set_at( (i % width, i // height), self.palette[nibble] )
-
+        if self._display_surf is None:
+            raise NotInitializedError
+        #Check the cache for preexisting sprite
+        if sprite_data in self.sprite_cache:
+            image = self.sprite_cache[sprite_data]
+        else:
+            image = self.render_sprite(sprite_data)
+            self.sprite_cache[sprite_data] = image
         self._display_surf.blit(image, position)
 
     def event(self, event):
         """Handle input"""
         if event.type == pygame.QUIT:
-            self._running = False
-        elif event.type == pygame.KEYDOWN and 272 < event.key < 277:
-            self.sprite.velocity = DIRMAP[event.key]
+            self.running = False
 
-    def set_bg(self, code):
-        """Set bg to color from palete"""
-        self.bg = self.palette[code]
+    def set_background(self, code):
+        """Set background to color from palete"""
+        self.background = self.palette[code]
 
     def flip(self):
         """Update display and wait for timing"""
-        self.vblank = False
-        self.clock.tick(60)
+        # self.clock.tick(30)
         pygame.display.update()
+        self._display_surf.fill(self.background)
+        self.vblank.set()
+        self.vblank.clear()
+        self.clock.tick(60)
         self.frame += 1
-        self.vblank = True
+
+    def cease(self):
+        """Stop running"""
+        self.running = False
 
     def cleanup(self):
         """Destroy everything in use"""
@@ -89,10 +120,9 @@ class Interface(Thread):
 
     def run(self):
         """Control events"""
-        if self.init() == False:
-            self._running = False
-
-        while( self._running ):
+        if not self.running:
+            raise NotInitializedError
+        while self.running:
             for event in pygame.event.get():
                 self.event(event)
             self.flip()
