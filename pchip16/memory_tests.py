@@ -12,7 +12,7 @@ class TestROMLoading(TestROM):
     """Test loading ROM into memory"""
     def setUp(self):
         super(TestROMLoading, self).setUp()
-        self.mem = Memory(self.rom.data)
+        self.mem = Memory(self.rom.data, len(self.rom.data))
     def test_len(self):
         self.assertEqual(len(self.mem), len(self.rom.data) )
     def test_rom_load(self):

@@ -16,7 +16,7 @@ class ROM(object):
     start_address = 0
     checksum = 0
     def __init__(self, file_handle=None):
-        """Initialise rom with contents of file_handle"""    
+        """Initialise rom with contents of file_handle"""
 
         if file_handle:
             self.load_file(file_handle)
@@ -34,7 +34,7 @@ class ROM(object):
             self.size = (size[3] << 24) | (size[2] << 16) | (size[1] << 8) \
                 | size[0]
             self.size = to_word(header[6:0xA])
-            self.start_address = (header[0xB] << 8) + header[0xA] 
+            self.start_address = (header[0xB] << 8) + header[0xA]
             self.checksum = to_word(header[0xC:0x10])
         data = file_handle.read()
         self.data = array('B')

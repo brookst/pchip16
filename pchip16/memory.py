@@ -22,7 +22,7 @@ class Memory(object):
         self._mem[index + 1] = 0
     def __len__(self):
         """Return the highest non-zero address in normal memory"""
-        end = 0xFDF0
+        end = min(0xFDF0, self.size)
         while not self[end - 2]:
             end -= 2
         return end
@@ -35,7 +35,7 @@ class Memory(object):
         """Return string representation of memory contents"""
         self._mem = array('B')
         self._mem.fromstring(data)
-        self._mem.extend((0 for i in range(2**16 - len(data))))
+        self._mem.extend((0 for i in range(self.size - len(data))))
 
 
 class Register(array):
