@@ -1,7 +1,6 @@
 """
 pchip16 VM class
 """
-#pylint: disable-msg=C0301,R0911,R0912
 
 CARRY = 0x1 << 1
 ZERO = 0x1 << 2
@@ -11,6 +10,47 @@ NEGATIVE = 0x1 << 7
 from random import randint
 from .memory import Memory, Register
 from .utils import is_neg, complement, to_dec, to_hex, INSTRUCTIONS
+
+COND_JUMPS = {
+        #"""Z   - Equal (Zero)"""
+        0x0: lambda f: f & ZERO,
+        #"""NZ  - Equal (Zero)"""
+        0x1: lambda f: not (f & ZERO),
+        #"""N   - Negative"""
+        0x2: lambda f: f & NEGATIVE,
+        #"""NN  - Not Negative (Positive or Zero"""
+        0x3: lambda f: not (f & NEGATIVE),
+        #"""P   - Positive"""
+        0x4: lambda f: not (f & NEGATIVE) and not (f & ZERO),
+        #"""O   - Overflow"""
+        0x5: lambda f: f & OVERFLOW,
+        #"""NO  - No Overflow"""
+        0x6: lambda f: not (f & OVERFLOW),
+        #"""A   - Above (Unsigned Greater Than)"""
+        0x7: lambda f: not f & CARRY and not f & ZERO,
+        #"""AE  - Above Equal (Unsigned Greater Than or Equal)"""
+        0x8: lambda f: not f & CARRY,
+        #"""B   - Below (Unsigned Less Than)"""
+        0x9: lambda f: f & CARRY,
+        #"""BE  - Below Equal (Unsigned Less Than or Equal)"""
+        0xa: lambda f: f & CARRY and f & ZERO,
+}
+SIGNED_CONDS = {
+        #"""G   - Greater (Signed Greater Than)"""
+        0xb: lambda e, f: e and not f & ZERO,
+        #"""GE  - Greater Equal (Signed Greater Than or Equal)"""
+        0xc: lambda e, f: e,
+        #"""L   - Less (Signed Less Than)"""
+        0xd: lambda e, f: not e,
+        #"""LE  - Less Equal (Signed Less Than or Equal)"""
+        0xe: lambda e, f: not e and f & ZERO,
+        #"""RES - Reserved for future use"""
+        0xf: lambda e, f: _not_implemented(),
+}
+
+def _not_implemented():
+    """Expression for use inside lambda"""
+    raise NotImplementedError
 
 def mask_code(op_code, mask):
     """Raise error for op_codes in mask"""
@@ -83,58 +123,11 @@ class VM(object):
 
     def cond_jump(self, branch_type):
         """Conditional jumps"""
-        if branch_type == 0x0:
-            #"""JZ, HHLL"""
-            return self.flags & ZERO
-        elif branch_type == 0x1:
-            #"""JNZ, HHLL"""
-            return not self.flags & ZERO
-        elif branch_type == 0x2:
-            #"""JN, HHLL"""
-            return self.flags & NEGATIVE
-        elif branch_type == 0x3:
-            #"""JNN, HHLL"""
-            return not self.flags & NEGATIVE
-        elif branch_type == 0x4:
-            #"""JP, HHLL"""
-            return not self.flags & NEGATIVE and not self.flags & ZERO
-        elif branch_type == 0x5:
-            #"""JO, HHLL"""
-            return self.flags & OVERFLOW
-        elif branch_type == 0x6:
-            #"""JNO, HHLL"""
-            return not self.flags & OVERFLOW
-        elif branch_type == 0x7:
-            #"""JA, HHLL"""
-            return not self.flags & CARRY and not self.flags & ZERO
-        elif branch_type == 0x8:
-            #"""JAE, HHLL"""
-            return not self.flags & CARRY
-        elif branch_type == 0x9:
-            #"""JB, HHLL"""
-            return self.flags & CARRY
-        elif branch_type == 0xA:
-            #"""JBE, HHLL"""
-            return self.flags & CARRY and self.flags & ZERO
-        elif branch_type == 0xB:
-            #"""JG, HHLL"""
-            on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE)
-            return on_equal and not self.flags & ZERO
-        elif branch_type == 0xC:
-            #"""JGE, HHLL"""
-            on_equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE)
-            return on_equal and self.flags & ZERO
-        elif branch_type == 0xD:
-            #"""JG, HHLL"""
-            on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE)
-            return on_nequal
-        elif branch_type == 0xE:
-            #"""JGE, HHLL"""
-            on_nequal = bool(self.flags & OVERFLOW) != bool(self.flags & NEGATIVE)
-            return on_nequal and self.flags & ZERO
-        elif branch_type == 0xF:
-            #"""RES, HHLL"""
-            raise NotImplementedError
+        if branch_type < 0xb:
+            return COND_JUMPS[branch_type](self.flags)
+        else:
+            equal = bool(self.flags & OVERFLOW) == bool(self.flags & NEGATIVE)
+            return SIGNED_CONDS[branch_type](equal, self.flags)
 
     def jump(self, op_code):
         """Jumps"""
