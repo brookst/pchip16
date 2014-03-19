@@ -3,6 +3,7 @@ pchip16 Assembler test runner
 """
 #pylint: disable=I0011, R0904
 
+from __future__ import print_function
 import unittest
 from pchip16.assembler import Assembler
 

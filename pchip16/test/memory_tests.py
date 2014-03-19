@@ -4,7 +4,7 @@ pchip16 rom test runner
 #pylint: disable=I0011, R0904
 
 import unittest
-from pchip16.rom_tests import TestROM
+from pchip16.test.rom_tests import TestROM
 from pchip16.memory import Memory
 from pchip16.rom import ROM
 
