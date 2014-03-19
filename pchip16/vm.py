@@ -2,6 +2,8 @@
 pchip16 VM class
 """
 
+from __future__ import print_function
+
 CARRY = 0x1 << 1
 ZERO = 0x1 << 2
 OVERFLOW = 0x1 << 6

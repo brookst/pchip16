@@ -1,7 +1,7 @@
 """
 pchip16 interface - graphics audio and controls module
 """
-#pylint: disable-msg=R0902,R0903,E1121
+#pylint: disable-msg=R0902,E1121
 
 import pygame
 from threading import Thread, Event

@@ -3,6 +3,7 @@
 pchip16 interface - graphics audio and controls module
 """
 
+from __future__ import print_function
 from pchip16 import Interface
 
 def test():
