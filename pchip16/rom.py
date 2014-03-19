@@ -42,4 +42,4 @@ class ROM(object):
 
     def calc_checksum(self):
         """Compute the checksum of current ROM data"""
-        return CRC32_FUNC(self.data.tostring() )
+        return CRC32_FUNC(self.data.tostring())

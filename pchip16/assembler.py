@@ -18,7 +18,7 @@ class Assembler(object):
     def list(self):
         """Print a list of instructions"""
         for opr in self.ops:
-            print("%4s %02d" %(self.ops[opr], opr) )
+            print("%4s %02d" %(self.ops[opr], opr))
 
     @staticmethod
     def parse_line(line):

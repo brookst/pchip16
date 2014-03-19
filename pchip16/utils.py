@@ -58,6 +58,12 @@ def complement(value):
     """Compute twos complement of value"""
     return 0xFFFF - value + 1
 
+def extract_address(op_code):
+    """return HH, LL from 0x____LLHH"""
+    hh_addr = op_code - (op_code >> 8 << 8)
+    ll_addr = (op_code - hh_addr - (op_code >> 16 << 16)) >> 8
+    return hh_addr, ll_addr
+
 def is_neg(value):
     """Check if the sign bit is set"""
     return value & 0x8000

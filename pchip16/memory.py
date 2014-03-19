@@ -6,10 +6,10 @@ from array import array
 
 class Memory(object):
     """Memory with 16-bit reads and writes"""
-    def __init__(self, data=None, size = 2**16):
+    def __init__(self, data=None, size=2**16):
         self.size = size
         if data is None:
-            self._mem = array('B', (0 for i in range(size) ) )
+            self._mem = array('B', (0 for i in range(size)))
         else:
             self.fromstring(data)
     def __getitem__(self, index):
@@ -41,4 +41,4 @@ class Memory(object):
 class Register(array):
     """16 x 16 bit registers"""
     def __new__(cls):
-        return super(Register, cls).__new__(cls, 'H', (0 for i in range(16) ) )
+        return super(Register, cls).__new__(cls, 'H', (0 for i in range(16)))

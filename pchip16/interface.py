@@ -1,7 +1,7 @@
 """
 pchip16 interface - graphics audio and controls module
 """
-#pylint: disable-msg=R0902,E1121
+#pylint: disable=R0902,E1121
 
 import pygame
 from threading import Thread, Event
@@ -74,8 +74,8 @@ class Interface(Thread):
         """Return a pygame sprite with data drawn on"""
         image = pygame.Surface(self.sprite_size)
         width, height = self.sprite_size
-        for i, nibble in enumerate(nibble_iter(data) ):
-            image.set_at( (i % width, i // width), self.palette[nibble] )
+        for i, nibble in enumerate(nibble_iter(data)):
+            image.set_at((i % width, i // width), self.palette[nibble])
         image.set_colorkey(self.palette[0x0])
         return image
 

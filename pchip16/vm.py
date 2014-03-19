@@ -11,7 +11,8 @@ NEGATIVE = 0x1 << 7
 
 from random import randint
 from .memory import Memory, Register
-from .utils import is_neg, complement, to_dec, to_hex, INSTRUCTIONS
+from .utils import is_neg, complement, to_dec, to_hex, extract_address, \
+     INSTRUCTIONS
 
 COND_JUMPS = {
         #"""Z   - Equal (Zero)"""
@@ -57,7 +58,7 @@ def _not_implemented():
 def mask_code(op_code, mask):
     """Raise error for op_codes in mask"""
     if op_code & mask:
-        raise ValueError("Invalid op code %s" %hex(op_code) )
+        raise ValueError("Invalid op code %s" %hex(op_code))
 
 class VM(object):
     """Object representing a single virtual machine instance"""
@@ -117,8 +118,7 @@ class VM(object):
         elif op_code >> 20 == 0x070:
             #"""RND RX, HHLL"""
             x_reg = (op_code >> 16) & 0xF
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             rand_max = self.mem[(hh_addr << 8) & ll_addr]
             self.register[x_reg] = randint(0, rand_max)
@@ -135,14 +135,12 @@ class VM(object):
         """Jumps"""
         if op_code >> 16 == 0x1000:
             #"""JMP HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             self.program_counter = (hh_addr << 8) + ll_addr
         elif op_code >> 20 == 0x120:
             #"""Jx HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             if self.cond_jump(op_code >> 16 & 0xF):
                 self.program_counter = (hh_addr << 8) + ll_addr
@@ -150,15 +148,13 @@ class VM(object):
             #"""JME RX, RY, HHLL"""
             y_reg = (op_code >> 20) - 0x130
             x_reg = ((op_code >> 16) - (y_reg << 4) - 0x1300)
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             if self.register[x_reg] == self.register[y_reg]:
                 self.program_counter = (hh_addr << 8) + ll_addr
         elif op_code >> 16 == 0x1400:
             #"""CALL HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
             self.mem[self.stack_pointer] = self.program_counter
@@ -176,8 +172,7 @@ class VM(object):
             self.program_counter = self.register[x_reg]
         elif op_code >> 20 == 0x170:
             #"""Cx HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             if self.cond_jump(op_code >> 16 & 0xF):
                 self.mem[self.stack_pointer] = self.program_counter
@@ -199,23 +194,20 @@ class VM(object):
         if op_code >> 20 == 0x200:
             #"""LDI RX, HHLL"""
             x_reg = (op_code >> 16) - 0x2000
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
             self.register[x_reg] = self.mem[addr]
         elif op_code >> 16 == 0x2100:
             #"""LDI SP, HHLL"""
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
             self.stack_pointer = self.mem[addr]
         elif op_code >> 20 == 0x220:
             #"""LDM RX, HHLL"""
             x_reg = (op_code >> 16) - 0x2200
-            hh_addr = op_code - (op_code >> 8 << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
             self.register[x_reg] = self.mem[self.mem[addr]]
@@ -244,8 +236,7 @@ class VM(object):
         if op_code >> 20 == 0x300:
             #"""STM RX, HHLL"""
             x_reg = (op_code >> 16) - 0x3000
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
             self.mem[addr] = self.register[x_reg]
@@ -355,8 +346,7 @@ class VM(object):
             #"""ADDI RX, HHLL"""
             mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x4000
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
 
@@ -388,8 +378,7 @@ class VM(object):
             #"""SUBI RX, HHLL"""
             mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x5000
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
 
@@ -416,8 +405,7 @@ class VM(object):
             #"""CMPI RX, HHLL"""
             mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x5300
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
 
@@ -438,8 +426,7 @@ class VM(object):
             #"""ANDI RX, HHLL"""
             mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x6000
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
 
@@ -466,8 +453,7 @@ class VM(object):
             #"""TSTI RX, HHLL"""
             mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x6300
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
 
@@ -488,8 +474,7 @@ class VM(object):
             #"""ORI RX, HHLL"""
             mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x7000
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
 
@@ -521,8 +506,7 @@ class VM(object):
             #"""XORI RX, HHLL"""
             mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x8000
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
 
@@ -554,8 +538,7 @@ class VM(object):
             #"""MULI RX, HHLL"""
             mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0x9000
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
 
@@ -587,8 +570,7 @@ class VM(object):
             #"""DIVI RX, HHLL"""
             mask_code(op_code, 0xF00000)
             x_reg = (op_code >> 16) - 0xA000
-            hh_addr = op_code - ((op_code >> 8) << 8)
-            ll_addr = (op_code - hh_addr - (op_code >> 16 << 16) ) >> 8
+            hh_addr, ll_addr = extract_address(op_code)
 
             addr = (hh_addr << 8) + ll_addr
 
