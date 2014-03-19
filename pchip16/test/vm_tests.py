@@ -1,12 +1,15 @@
 """
 pchip16 test runner
 """
-#pylint: disable=I0011, R0904
+#pylint: disable=R0904, W0212, C0103, C0111
 
 import unittest
 from pchip16 import VM
 from pchip16.vm import CARRY, ZERO, OVERFLOW, NEGATIVE
 import pchip16.utils as utils
+
+def pattern(x):
+    return (x << 12) + (x << 8) + (x << 4) + x
 
 class TestVM(unittest.TestCase):
     """Test aspects of the virtual machine"""
@@ -422,7 +425,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_zero_zero_zero(self):
         # Subtract 0 from 0
         self.vmac.flags |= OVERFLOW | CARRY | NEGATIVE
-        value = self.vmac._sub(0,0)
+        value = self.vmac._sub(0, 0)
         self.assertEqual(value, 0)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -431,7 +434,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_pos_pos_zero(self):
         # Subtract 7 from 7
         self.vmac.flags |= OVERFLOW | CARRY | NEGATIVE
-        value = self.vmac._sub(7,7)
+        value = self.vmac._sub(7, 7)
         self.assertEqual(value, 0x0)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -440,7 +443,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_pos_zero_pos(self):
         # Subtract 0 from 7
         self.vmac.flags |= OVERFLOW | CARRY | ZERO | NEGATIVE
-        value = self.vmac._sub(7,0)
+        value = self.vmac._sub(7, 0)
         self.assertEqual(value, 7)
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertFalse(self.vmac.flags & CARRY)
@@ -459,7 +462,7 @@ class TestSubtraction(TestVM):
         # Subtract 49 from 7
         self.vmac.flags |= OVERFLOW | ZERO
         value = self.vmac._sub(7, 49)
-        self.assertEqual(value, utils.to_hex(-42) )
+        self.assertEqual(value, utils.to_hex(-42))
         self.assertFalse(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
         self.assertFalse(self.vmac.flags & ZERO)
@@ -476,7 +479,7 @@ class TestSubtraction(TestVM):
     def test_sub_op_pos_neg_neg_overflow(self):
         # Subtract -2 from POS_MAX
         self.vmac.flags |= ZERO
-        value = self.vmac._sub(0x7FFF, utils.to_hex(-2) )
+        value = self.vmac._sub(0x7FFF, utils.to_hex(-2))
         self.assertEqual(value, 0x8001)
         self.assertTrue(self.vmac.flags & OVERFLOW)
         self.assertTrue(self.vmac.flags & CARRY)
@@ -506,19 +509,19 @@ class TestSubtractionCodes(TestVM):
         self.vmac.register[0x1] = 70
         self.vmac.mem[0x2345] = 490
         self.vmac.execute(0x50014523)
-        self.assertEqual(self.vmac.register[0x1], utils.complement(420) )
+        self.assertEqual(self.vmac.register[0x1], utils.complement(420))
         self.assertRaises(ValueError, self.vmac.execute, 0x50100000)
     def test_SUB_RX_RY_instruction(self):
         self.vmac.register[0x1] = 7
         self.vmac.register[0x2] = 49
         self.vmac.execute(0x51210000)
-        self.assertEqual(self.vmac.register[0x1], utils.complement(42) )
+        self.assertEqual(self.vmac.register[0x1], utils.complement(42))
         self.assertRaises(ValueError, self.vmac.execute, 0x51001234)
     def test_SUB_RX_RY_RZ_instruction(self):
         self.vmac.register[0x1] = 7
         self.vmac.register[0x2] = 49
         self.vmac.execute(0x52210300)
-        self.assertEqual(self.vmac.register[0x3], utils.complement(42) )
+        self.assertEqual(self.vmac.register[0x3], utils.complement(42))
         self.assertRaises(ValueError, self.vmac.execute, 0x52001000)
         self.assertRaises(ValueError, self.vmac.execute, 0x52000023)
         self.assertRaises(ValueError, self.vmac.execute, 0x52001023)
@@ -892,24 +895,22 @@ class TestStackCodes(TestVM):
         self.assertEqual(self.vmac.register[1], 0xAAAA)
         self.assertEqual(self.vmac.stack_pointer, 0xFDF0)
         self.assertRaises(ValueError, self.vmac.execute, 0xC1001234)
-    def pattern(self, x):
-        return (x << 12) + (x << 8) + (x << 4) + x
     def test_PUSHALL_instruction(self):
         for i in range(16):
-            self.vmac.register[i] = self.pattern(i)
+            self.vmac.register[i] = pattern(i)
         self.vmac.execute(0xC2000000)
         for i in range(16):
-            self.assertEqual(self.vmac.mem[0xFDF0 + 2 * i], self.pattern(i) )
+            self.assertEqual(self.vmac.mem[0xFDF0 + 2 * i], pattern(i))
         self.assertEqual(self.vmac.stack_pointer, 0xFE10)
         self.assertRaises(ValueError, self.vmac.execute, 0xC2123456)
     def test_POPALL_instruction(self):
         self.vmac.stack_pointer = 0xFDF0 + 32
         for i in range(16):
-            self.vmac.mem[0xFDF0 + 2 * i] = self.pattern(i)
+            self.vmac.mem[0xFDF0 + 2 * i] = pattern(i)
         self.vmac.execute(0xC3000000)
         self.assertEqual(self.vmac.stack_pointer, 0xFDF0)
         for i in range(16):
-            self.assertEqual(self.vmac.register[i], self.pattern(i) )
+            self.assertEqual(self.vmac.register[i], pattern(i))
         self.assertRaises(ValueError, self.vmac.execute, 0xC3123456)
     def test_PUSHF_instruction(self):
         self.vmac.flags = 0xAAAA

@@ -1,7 +1,7 @@
 """
 pchip16 rom test runner
 """
-#pylint: disable=I0011, R0904
+#pylint: disable=R0904, C0111
 
 import unittest
 from pchip16 import ROM

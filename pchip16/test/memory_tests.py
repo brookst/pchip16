@@ -1,9 +1,8 @@
 """
 pchip16 rom test runner
 """
-#pylint: disable=I0011, R0904
+#pylint: disable=R0904, C0111
 
-import unittest
 from pchip16.test.rom_tests import TestROM
 from pchip16.memory import Memory
 from pchip16.rom import ROM
@@ -14,9 +13,9 @@ class TestROMLoading(TestROM):
         super(TestROMLoading, self).setUp()
         self.mem = Memory(self.rom.data, len(self.rom.data))
     def test_len(self):
-        self.assertEqual(len(self.mem), len(self.rom.data) )
+        self.assertEqual(len(self.mem), len(self.rom.data))
     def test_rom_load(self):
-        self.assertEqual(self.mem.tostring(), self.rom.data.tostring() )
+        self.assertEqual(self.mem.tostring(), self.rom.data.tostring())
 
 class TestChecksum(TestROMLoading):
     """Test checksum algorithm gives the same result"""

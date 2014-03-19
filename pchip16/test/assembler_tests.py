@@ -1,7 +1,7 @@
 """
 pchip16 Assembler test runner
 """
-#pylint: disable=I0011, R0904
+#pylint: disable=R0904, C0103, C0111
 
 from __future__ import print_function
 import unittest
@@ -35,12 +35,12 @@ class TestParsing(TestAssembler):
         tokens = ["MOV", "RX", "RY"]
         self.assertEqual(self.asm.parse_line("MOV RX RY"), tokens)
     def test_trinary_op(self):
-        tokens = ["ADD","RX","RY","RZ"]
+        tokens = ["ADD", "RX", "RY", "RZ"]
         self.assertEqual(self.asm.parse_line("ADD RX RY RZ"), tokens)
 
     def test_ops_with_comment(self):
         tokens = ["MOV", "RX", "RY"]
-        self.assertEqual(self.asm.parse_line("MOV RX RY ;This is a comment"), tokens)
+        self.assertEqual(self.asm.parse_line("MOV RX RY ;A comment"), tokens)
     def test_lowercase(self):
         tokens = ["MOV", "RX", "RY"]
         self.assertEqual(self.asm.parse_line("mov rx ry"), tokens)
